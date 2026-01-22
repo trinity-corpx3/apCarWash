@@ -134,7 +134,7 @@ export class OrdersComponent implements OnInit {
   showRfcSuggestions = false;
 
   private resolveSucursalGroupIds(baseId: number): number[] {
-    return baseId === 3 ? [3] : [1, 2];
+    return [baseId];
   }
 
   private isSucursalAllowedForGlobal(id?: number | null): boolean {

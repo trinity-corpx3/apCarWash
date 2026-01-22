@@ -15,7 +15,7 @@ export class LoginComponent implements OnInit {
   email: string = '';
   password: string = '';
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(private authService: AuthService, private router: Router) { }
 
   ngOnInit(): void {
     // Verifica si el usuario ya está autenticado
@@ -35,15 +35,15 @@ export class LoginComponent implements OnInit {
       alert('Por favor, ingresa tu email y contraseña.');
       return;
     }
-  
+
     this.authService.login(this.email, this.password).subscribe(
       (response) => {
         console.log('🔹 Login exitoso, usuario:', response);
         this.authService.setCurrentUser(response);
-  
+
         // Verificamos qué rol tiene el usuario después de loguearse
         console.log('🔹 Rol recibido en login:', response.rol);
-  
+
         this.redirectUser(response.rol);
       },
       (error) => {
@@ -52,7 +52,7 @@ export class LoginComponent implements OnInit {
       }
     );
   }
-  
+
 
   /**
    * Redirige al usuario según su rol
@@ -70,6 +70,7 @@ export class LoginComponent implements OnInit {
         this.router.navigate(['/admin-menu']);
         break;
       case 'operador':
+      case 'operator': // Added support for English 'operator'
       case '3':
         this.router.navigate(['/pos']);
         break;
@@ -82,7 +83,7 @@ export class LoginComponent implements OnInit {
         this.router.navigate(['/login']);
     }
   }
-  
-  
-  
+
+
+
 }

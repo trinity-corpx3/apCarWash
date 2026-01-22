@@ -16,7 +16,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/usuarios")
 @CrossOrigin(origins = { "http://localhost:4200", "http://poserprl.s3-website.us-east-2.amazonaws.com",
-        "https://rlautolavado.com", "https://www.rlautolavado.com" })
+        "https://rlautolavado.com", "https://www.rlautolavado.com", "https://apcarwash.trinitycorp.mx",
+        "https://www.apcarwash.trinitycorp.mx" })
 public class UsuarioController {
 
     private final UsuarioService usuarioService;

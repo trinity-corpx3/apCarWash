@@ -18,9 +18,11 @@ public class CorsConfig {
                 "http://localhost:4200",
                 "http://poserprl.s3-website.us-east-2.amazonaws.com",
                 "https://rlautolavado.com",
-                "https://www.rlautolavado.com"));
+                "https://www.rlautolavado.com",
+                "https://apcarwash.trinitycorp.mx",
+                "https://www.apcarwash.trinitycorp.mx"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

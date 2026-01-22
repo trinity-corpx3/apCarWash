@@ -1,27 +1,39 @@
 services:
-  db:
+  postgres:
     image: postgres:15-alpine
+    container_name: trinity-postgres
     environment:
-      POSTGRES_DB: poserp
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: postgres
     volumes:
+      - ./init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
     networks:
-      - trinity-network
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/poserp
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/poserp_apcarwash
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
     depends_on:
-      - db
+      postgres:
+        condition: service_healthy
     networks:
-      - trinity-network
+      - app-network
+    restart: unless-stopped
 
   frontend:
     build:
@@ -29,11 +41,14 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - backend
+    ports:
+      - "80:80"
     networks:
-      - trinity-network
+      - app-network
+    restart: unless-stopped
 
 networks:
-  trinity-network:
+  app-network:
     driver: bridge
 
 volumes:

@@ -36,15 +36,15 @@ public class ProductoController {
             // Verificar si es un error de nombre duplicado
             if (e.getMessage() != null && e.getMessage().contains("ux_productos_nombre_sucursal")) {
                 return ResponseEntity.status(org.springframework.http.HttpStatus.CONFLICT)
-                    .body("Ya existe un producto con el nombre '" + producto.getNombre() + 
-                          "' en esta sucursal.");
+                        .body("Ya existe un producto con el nombre '" + producto.getNombre() +
+                                "' en esta sucursal.");
             }
             // Otro tipo de error de integridad
             return ResponseEntity.status(org.springframework.http.HttpStatus.CONFLICT)
-                .body("Error al crear el producto. Verifique los datos ingresados.");
+                    .body("Error al crear el producto. Verifique los datos ingresados.");
         } catch (Exception e) {
             return ResponseEntity.status(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error interno al crear el producto.");
+                    .body("Error interno al crear el producto.");
         }
     }
 
@@ -73,26 +73,26 @@ public class ProductoController {
                 updatedProducto.setCategoria(producto.getCategoria());
                 updatedProducto.setActivo(producto.getActivo());
                 updatedProducto.setSucursal(producto.getSucursal());
-                
+
                 Producto saved = productoService.save(updatedProducto);
                 return ResponseEntity.ok(saved);
             } else {
                 return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND)
-                    .body("Producto no encontrado.");
+                        .body("Producto no encontrado.");
             }
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
             // Verificar si es un error de nombre duplicado
             if (e.getMessage() != null && e.getMessage().contains("ux_productos_nombre_sucursal")) {
                 return ResponseEntity.status(org.springframework.http.HttpStatus.CONFLICT)
-                    .body("Ya existe un producto con el nombre '" + producto.getNombre() + 
-                          "' en esta sucursal.");
+                        .body("Ya existe un producto con el nombre '" + producto.getNombre() +
+                                "' en esta sucursal.");
             }
             // Otro tipo de error de integridad
             return ResponseEntity.status(org.springframework.http.HttpStatus.CONFLICT)
-                .body("Error al actualizar el producto. Verifique los datos ingresados.");
+                    .body("Error al actualizar el producto. Verifique los datos ingresados.");
         } catch (Exception e) {
             return ResponseEntity.status(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error interno al actualizar el producto.");
+                    .body("Error interno al actualizar el producto.");
         }
     }
 
@@ -104,11 +104,19 @@ public class ProductoController {
 
     // Nuevo: Obtener productos por sucursal validando el usuario autenticado
     @GetMapping("/por-sucursal")
-    public ResponseEntity<List<Producto>> getProductosPorSucursalValidado(
+    public ResponseEntity<?> getProductosPorSucursalValidado(
             @RequestParam Long sucursalId,
             Principal principal) {
-        String emailUsuario = principal.getName(); // Obtener el email del usuario autenticado
-        List<Producto> productos = productoService.findProductosBySucursalAndValidateUser(sucursalId, emailUsuario);
-        return ResponseEntity.ok(productos);
+        try {
+            String emailUsuario = principal.getName(); // Obtener el email del usuario autenticado
+            List<Producto> productos = productoService.findProductosBySucursalAndValidateUser(sucursalId, emailUsuario);
+            return ResponseEntity.ok(productos);
+        } catch (com.trinity.poserp.exception.UnauthorizedException e) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error al obtener productos: " + e.getMessage());
+        }
     }
 }

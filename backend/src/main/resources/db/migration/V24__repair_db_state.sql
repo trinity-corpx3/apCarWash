@@ -18,6 +18,10 @@ ON CONFLICT (id) DO UPDATE SET nombre = EXCLUDED.nombre;
 
 -- 3. ENSURE SUCURSAL ID 1 IS 'Sucursal Tec AP'
 -- First, verify no other sucursal blocks the name 'Sucursal Tec AP' or 'TEC'.
+
+-- CRITICAL FIX: Delete users associated with other branches first to avoid FK violation
+DELETE FROM usuarios WHERE sucursal_id <> 1 AND username <> 'admin';
+
 DELETE FROM sucursales WHERE id <> 1;
 
 -- Now update ID 1 to match the desired state

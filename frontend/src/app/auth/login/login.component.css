@@ -67,14 +67,12 @@ body {
 
 .trinity-logo {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-size: 3.5rem;
+  font-size: 2.2rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #002244 0%, #004488 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #990000;
   letter-spacing: -0.04em;
   margin-bottom: 0.5rem;
+  white-space: nowrap;
 }
 
 h2 {
@@ -109,8 +107,8 @@ h2 {
 
 .form-field input:focus {
   outline: none;
-  border-color: #002244;
-  box-shadow: 0 0 0 4px rgba(0, 34, 68, 0.1);
+  border-color: #990000;
+  box-shadow: 0 0 0 4px rgba(153, 0, 0, 0.1);
 }
 
 button {
@@ -128,14 +126,14 @@ button {
 
 /* Botón habilitado (cuando el formulario es válido) */
 button:not(:disabled) {
-  background: #002244;
+  background: #990000;
   color: white;
 }
 
 button:hover:not(:disabled) {
-  background: #003366;
+  background: #770000;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 34, 68, 0.2);
+  box-shadow: 0 4px 12px rgba(153, 0, 0, 0.2);
 }
 
 /* Botón deshabilitado (cuando el formulario es inválido) */

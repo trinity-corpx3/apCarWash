@@ -106,7 +106,7 @@ p {
 }
 
 #white-button {
-    background-color: #002244;
+    background-color: #990000;
     color: rgb(255, 255, 255);
     border: none;
     border-radius: 15px;
@@ -115,7 +115,7 @@ p {
 }
 
 #white-button:hover {
-    background-color: #004488;
+    background-color: #770000;
 }
 
 /* Media queries para hacer el diseño responsivo */
@@ -165,10 +165,7 @@ p {
     margin-bottom: 0;
     text-align: center;
     letter-spacing: -0.04em;
-    background: linear-gradient(135deg, #ffffff 0%, #a0c4ff 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: #ffffff;
 }
 
 .main-subtitle {

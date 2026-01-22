@@ -1,0 +1,254 @@
+<div class="app-container">
+  <div class="row g-0">
+    <!-- Sidebar -->
+    <app-sidebar></app-sidebar>
+
+    <main class="main-content">
+      <div class="content-header">
+        <div class="header-title">
+          <h2>Clientes</h2>
+        </div>
+      </div>
+      <div class="container mt-3">
+
+  <div *ngIf="saveMessage" class="alert alert-success alert-dismissible fade show mb-3" role="alert">
+    {{ saveMessage }}
+    <button type="button" class="btn-close" aria-label="Close" (click)="saveMessage=''"></button>
+  </div>
+  <div *ngIf="saveError" class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+    {{ saveError }}
+    <button type="button" class="btn-close" aria-label="Close" (click)="saveError=''"></button>
+  </div>
+
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <input class="form-control" placeholder="Buscar por nombre, email o teléfono" [(ngModel)]="q" (input)="applyFilter()"/>
+    <button class="btn btn-primary" (click)="newCustomer()" data-bs-toggle="modal" data-bs-target="#custModal">Nuevo</button>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead><tr><th>Nombre</th><th>RFC</th><th>Razón Social</th><th>Email</th><th>Teléfono</th><th>Domicilio</th><th>Acciones</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let c of filtered" (click)="select(c)" [class.table-active]="c.id===selectedId">
+          <td>
+            <i class="fas" [ngClass]="c.id===selectedId ? 'fa-chevron-down' : 'fa-chevron-right'" style="width:16px"></i>
+            {{c.nombreCompleto}}
+          </td>
+          <td>{{ c.rfc || '-' }}</td>
+          <td>{{ c.razonSocial || '-' }}</td>
+          <td>{{c.email || '-'}}</td>
+          <td>{{c.telefono || '-'}}</td>
+          <td>{{c.domicilio || '-'}}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-danger" (click)="remove(c); $event.stopPropagation()">
+              <i class="fas fa-trash me-1"></i>Eliminar
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="!filtered.length"><td colspan="7" class="text-center">Sin resultados</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Panel de detalles editable -->
+  <div class="customer-details-panel mt-3" *ngIf="selectedId">
+      <div class="panel-header">
+      <h5 class="mb-0">
+        <i class="fas fa-user me-2"></i>Detalles del Cliente
+      </h5>
+      <button class="btn btn-sm btn-light" (click)="editCustomer(form)" data-bs-toggle="modal" data-bs-target="#custModal">
+        <i class="fas fa-edit me-1"></i>Editar
+      </button>
+    </div>
+    
+    <div class="panel-body">
+      <!-- Datos Básicos -->
+      <div class="details-section">
+        <h6 class="section-title">
+          <i class="fas fa-address-card me-2"></i>Información de Contacto
+        </h6>
+        <div class="details-grid">
+          <div class="detail-item">
+            <label><i class="fas fa-user me-1"></i>Nombre</label>
+            <div class="detail-value">{{ form.nombreCompleto || '-' }}</div>
+          </div>
+          <div class="detail-item">
+            <label><i class="fas fa-envelope me-1"></i>Email</label>
+            <div class="detail-value">{{ form.email || '-' }}</div>
+          </div>
+          <div class="detail-item">
+            <label><i class="fas fa-phone me-1"></i>Teléfono</label>
+            <div class="detail-value">{{ form.telefono || '-' }}</div>
+          </div>
+          <div class="detail-item detail-item-full">
+            <label><i class="fas fa-map-marker-alt me-1"></i>Domicilio</label>
+            <div class="detail-value">{{ form.domicilio || '-' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Datos Fiscales -->
+      <div class="details-section" *ngIf="invoicing.rfc || invoicing.razonSocial">
+        <h6 class="section-title">
+          <i class="fas fa-file-invoice me-2"></i>Datos Fiscales
+        </h6>
+        <div class="details-grid">
+          <div class="detail-item">
+            <label><i class="fas fa-id-card me-1"></i>RFC</label>
+            <div class="detail-value">{{ invoicing.rfc || '-' }}</div>
+          </div>
+          <div class="detail-item detail-item-full">
+            <label><i class="fas fa-building me-1"></i>Razón Social</label>
+            <div class="detail-value">{{ invoicing.razonSocial || '-' }}</div>
+          </div>
+          <div class="detail-item">
+            <label><i class="fas fa-receipt me-1"></i>Régimen Fiscal</label>
+            <div class="detail-value">{{ invoicing.regimenFiscal || '-' }}</div>
+          </div>
+          <div class="detail-item">
+            <label><i class="fas fa-tag me-1"></i>Uso CFDI</label>
+            <div class="detail-value">{{ invoicing.usoCfdi || '-' }}</div>
+          </div>
+          <div class="detail-item">
+            <label><i class="fas fa-mail-bulk me-1"></i>Código Postal</label>
+            <div class="detail-value">{{ invoicing.codigoPostal || '-' }}</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="details-section" *ngIf="!invoicing.rfc && !invoicing.razonSocial">
+        <div class="no-fiscal-data">
+          <i class="fas fa-info-circle me-2"></i>
+          <span>No hay datos fiscales registrados. 
+            <a href="#" (click)="editCustomer(form); $event.preventDefault()" data-bs-toggle="modal" data-bs-target="#custModal">Agregar datos fiscales</a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de cliente unificado -->
+  <div class="modal fade" id="custModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fas" [ngClass]="form.id ? 'fa-user-edit' : 'fa-user-plus'"></i>
+            {{ form.id ? 'Editar' : 'Nuevo' }} Cliente
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-section">
+            <!-- Datos Básicos -->
+            <h6 class="section-divider mb-3">
+              <i class="fas fa-address-card me-2"></i>Información de Contacto
+            </h6>
+            <div class="row g-3 mb-4">
+              <div class="col-12">
+                <label class="form-label">
+                  <i class="fas fa-user me-1"></i>Nombre Completo <span class="text-danger">*</span>
+                </label>
+                <input type="text" class="form-control" [(ngModel)]="form.nombreCompleto" 
+                       placeholder="Ingrese el nombre completo" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">
+                  <i class="fas fa-envelope me-1"></i>Email
+                </label>
+                <input type="email" class="form-control" [(ngModel)]="form.email" 
+                       placeholder="correo@ejemplo.com">
+                <small class="form-text text-muted">Se usará para facturas electrónicas si aplica</small>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">
+                  <i class="fas fa-phone me-1"></i>Teléfono
+                </label>
+                <input type="tel" class="form-control" [(ngModel)]="form.telefono" 
+                       placeholder="1234567890">
+              </div>
+              <div class="col-12">
+                <label class="form-label">
+                  <i class="fas fa-map-marker-alt me-1"></i>Domicilio
+                </label>
+                <input type="text" class="form-control" [(ngModel)]="form.domicilio" 
+                       placeholder="Calle, número, colonia, ciudad">
+              </div>
+            </div>
+
+            <!-- Datos Fiscales -->
+            <h6 class="section-divider mb-3">
+              <i class="fas fa-file-invoice me-2"></i>Datos Fiscales <small class="text-muted">(Opcional)</small>
+            </h6>
+            <div class="alert alert-info mb-3">
+              <i class="fas fa-info-circle me-2"></i>
+              Los datos fiscales son opcionales y se utilizan para generar facturas electrónicas.
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">
+                  <i class="fas fa-id-card me-1"></i>RFC
+                </label>
+                <input type="text" class="form-control" [(ngModel)]="form.rfc" 
+                       placeholder="ABC123456789" maxlength="13" 
+                       style="text-transform: uppercase;">
+                <small class="form-text text-muted">Formato: 12 o 13 caracteres</small>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">
+                  <i class="fas fa-mail-bulk me-1"></i>Código Postal
+                </label>
+                <input type="text" class="form-control" [(ngModel)]="form.codigoPostal" 
+                       placeholder="12345" maxlength="5" pattern="[0-9]{5}">
+              </div>
+              <div class="col-12">
+                <label class="form-label">
+                  <i class="fas fa-building me-1"></i>Razón Social
+                </label>
+                <input type="text" class="form-control" [(ngModel)]="form.razonSocial" 
+                       placeholder="Nombre o razón social registrada en el SAT">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">
+                  <i class="fas fa-receipt me-1"></i>Régimen Fiscal
+                </label>
+                <select class="form-select" [(ngModel)]="form.regimenFiscal">
+                  <option [ngValue]="null">Seleccione un régimen...</option>
+                  <option *ngFor="let r of regimenOptions" [ngValue]="r.code">
+                    {{ r.code }} - {{ r.label }}
+                  </option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">
+                  <i class="fas fa-tag me-1"></i>Uso CFDI
+                </label>
+                <select class="form-select" [(ngModel)]="form.usoCfdi">
+                  <option [ngValue]="null">Seleccione un uso...</option>
+                  <option *ngFor="let u of usoCfdiOptions" [ngValue]="u.code">
+                    {{ u.code }} - {{ u.label }}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i>Cancelar
+          </button>
+          <button class="btn btn-primary d-flex align-items-center gap-2" (click)="save()" [disabled]="saving || !form.nombreCompleto?.trim()">
+            <span *ngIf="saving" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <i *ngIf="!saving" class="fas fa-save"></i>
+            <span>{{ saving ? 'Guardando...' : 'Guardar' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+

@@ -1,0 +1,222 @@
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Director de Órdenes</h2>
+    <div class="d-flex align-items-center">
+      <select class="form-select me-3" [(ngModel)]="selectedSucursal" (change)="updateDataForSucursal()">
+        <option *ngFor="let sucursal of sucursales" [value]="sucursal.id">
+          {{ sucursal.nombre }}
+        </option>
+      </select>
+      <div class="user-info">
+        <div class="user-name">{{ userName }}</div>
+        <div class="user-email">{{ userEmail }}</div>
+        <div class="user-role">{{ userRole }}</div>
+      </div>
+      <div class="d-flex flex-column align-items-stretch ms-3" style="gap: 8px;">
+        <button *ngIf="isDirectorGlobal()" class="btn btn-outline-info" (click)="previewMonthlyReport()">
+          <i class="fas fa-chart-line"></i> Reporte Mensual - {{ getSucursalName() }}
+        </button>
+        <button *ngIf="isDirectorGlobal()" class="btn btn-outline-primary" (click)="downloadMonthlyPdf(true)">
+          <i class="fas fa-file-pdf"></i> Descargar Reporte Mensual Individual
+        </button>
+        <button *ngIf="isDirectorGlobal()" class="btn btn-outline-primary" (click)="downloadMonthlyPdf(false)">
+          <i class="fas fa-file-pdf"></i> Descargar Reporte Mensual Global
+        </button>
+        <button *ngIf="isDirectorGlobal()" class="btn btn-outline-success" (click)="sendMonthlyNow()">
+          <i class="fas fa-paper-plane"></i> Enviar ahora
+        </button>
+        <button class="btn btn-outline-danger" (click)="logout()">
+          Cerrar Sesión
+        </button>
+      </div>
+  </div>
+  </div>
+
+   <!-- Resumen de Ventas -->
+  <div class="sales-summary mb-4">
+    <div class="summary-item">
+        <h4>Hoy: <span class="sales-count">{{ todaySalesCount }} ventas</span></h4>
+        <p class="sale-amount">${{ todaySalesAmount | number:'1.2-2' }}</p>
+      <button class="btn btn-primary mt-2" (click)="exportToCSV('today')">Exportar CSV</button>
+      <button class="btn btn-secondary mt-2" (click)="generateTicket('today')">Corte del Día</button>
+      </div>
+
+    <div class="summary-item">
+        <h4>Ayer: <span class="sales-count">{{ yesterdaySalesCount }} ventas</span></h4>
+        <p class="sale-amount">${{ yesterdaySalesAmount | number:'1.2-2' }}</p>
+      <button class="btn btn-primary mt-2" (click)="exportToCSV('yesterday')">Exportar CSV</button>
+      <button class="btn btn-secondary mt-2" (click)="generateTicket('yesterday')">Corte de Ayer</button>
+      </div>
+
+    <div class="summary-item">
+      <h4>Esta Semana: <span class="sales-count">{{ weekSalesCount }} ventas</span></h4>
+        <p class="sale-amount">${{ weekSalesAmount | number:'1.2-2' }}</p>
+      <button class="btn btn-primary mt-2" (click)="exportToCSV('week')">Exportar CSV</button>
+      <button class="btn btn-secondary mt-2" (click)="generateTicket('week')">Corte Semanal</button>
+      </div>
+
+    <div class="summary-item">
+      <h4>Este Mes: <span class="sales-count">{{ monthSalesCount }} ventas</span></h4>
+        <p class="sale-amount">${{ monthSalesAmount | number:'1.2-2' }}</p>
+      <button class="btn btn-primary mt-2" (click)="exportToCSV('month')">Exportar CSV</button>
+      <button class="btn btn-secondary mt-2" (click)="generateTicket('month')">Corte Mensual</button>
+    </div>
+  </div>
+
+  <!-- Corte Personalizado -->
+  <div class="custom-cut mb-4">
+    <h4>Corte Personalizado</h4>
+    <div class="d-flex gap-3 align-items-center">
+      <div class="form-group">
+        <label>Fecha Inicio:</label>
+        <input type="date" class="form-control" [(ngModel)]="customStartDate">
+</div>
+      <div class="form-group">
+        <label>Fecha Fin:</label>
+        <input type="date" class="form-control" [(ngModel)]="customEndDate">
+</div>
+      <button class="btn btn-primary" (click)="generateTicket('custom')" [disabled]="!customStartDate || !customEndDate">
+        Generar Corte
+    </button>
+  </div>
+</div>
+
+  <!-- Tabla de Órdenes -->
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Fecha</th>
+          <th>Total</th>
+          <th>Estado</th>
+          <th>Items</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="isLoading">
+          <td colspan="5" class="text-center">Cargando...</td>
+        </tr>
+        <tr *ngIf="!isLoading && paginatedOrders.length === 0">
+          <td colspan="5" class="text-center">No hay órdenes disponibles</td>
+        </tr>
+        <tr *ngFor="let order of paginatedOrders">
+          <td>{{ order.id }}</td>
+          <td>{{ order.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td>${{ order.total | number:'1.2-2' }}</td>
+          <td>{{ order.estado }}</td>
+          <td>{{ order.totalItems }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Paginación -->
+  <div class="d-flex justify-content-between align-items-center mt-3">
+    <div class="d-flex align-items-center">
+      <label class="me-2">Registros por página:</label>
+      <select class="form-select" style="width: auto;" [(ngModel)]="recordsPerPage" (change)="onRecordsPerPageChange()">
+        <option value="10">10</option>
+        <option value="25">25</option>
+        <option value="50">50</option>
+      </select>
+    </div>
+    <div>
+      <button class="btn btn-outline-primary me-2" [disabled]="currentPage === 1" (click)="previousPage()">
+        Anterior
+      </button>
+      <span>Página {{ currentPage }} de {{ totalPages }}</span>
+      <button class="btn btn-outline-primary ms-2" [disabled]="currentPage === totalPages" (click)="nextPage()">
+        Siguiente
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Resumen de Corte -->
+<ng-template #cutModal let-modal>
+  <div class="modal-header">
+    <h4 class="modal-title">Resumen de Corte</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    <div class="ticket-content">
+      <!-- Encabezado del ticket -->
+      <div class="text-center mb-4">
+        <h5>{{ getSucursalName() }}</h5>
+        <p class="mb-1">{{ currentCut.periodText }}</p>
+        <p class="mb-1">Fecha de generación: {{ currentCut.generationDate }}</p>
+      </div>
+
+      <!-- Resumen de ventas -->
+      <div class="sales-details mb-4">
+        <h6 class="border-bottom pb-2">Resumen de Ventas</h6>
+        <div class="d-flex justify-content-between mb-2">
+          <span>Total de ventas:</span>
+          <span>{{ currentCut.totalSales }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span>Monto total:</span>
+          <span>${{ currentCut.totalAmount | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <!-- Detalles de ventas -->
+      <div class="sales-list mb-4">
+        <h6 class="border-bottom pb-2">Detalle de Ventas</h6>
+        <div class="table-responsive">
+          <table class="table table-sm">
+      <thead>
+        <tr>
+                <th>ID</th>
+                <th>Fecha</th>
+                <th>Total</th>
+                <th>Items</th>
+        </tr>
+      </thead>
+      <tbody>
+              <tr *ngFor="let sale of currentCut.sales">
+                <td>{{ sale.id }}</td>
+                <td>{{ sale.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td>${{ sale.total | number:'1.2-2' }}</td>
+                <td>{{ sale.totalItems }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+      </div>
+  </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-primary" (click)="printTicket()">
+      Imprimir Ticket
+    </button>
+    <button type="button" class="btn btn-secondary" (click)="downloadPDF()">
+      Descargar PDF
+    </button>
+    <button type="button" class="btn btn-outline-secondary" (click)="modal.close()">
+      Cerrar
+    </button>
+  </div>
+</ng-template>
+
+<!-- Modal para mostrar el ticket -->
+<div class="modal fade" id="ticketModal" tabindex="-1" aria-labelledby="ticketModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="ticketModalLabel">Vista previa del Corte</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <iframe id="ticketIframe" style="width: 100%; height: 600px; border: none;"></iframe>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="document.getElementById('ticketIframe').contentWindow.print()">
+          Imprimir
+        </button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>

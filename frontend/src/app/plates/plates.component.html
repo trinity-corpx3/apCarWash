@@ -1,0 +1,368 @@
+<div class="app-container">
+  <!-- Sidebar -->
+  <app-sidebar></app-sidebar>
+
+  <!-- Contenido principal -->
+  <main class="main-content">
+    <!-- Encabezado -->
+    <div class="content-header">
+      <div class="header-title">
+        <h2>Analítica de Placas</h2>
+        <p class="text-muted mb-0">Trazabilidad y estadísticas de placas</p>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filter-bar mb-3">
+      <div class="row g-2">
+        <div class="col-md-3">
+          <input
+            type="text"
+            class="form-control"
+            placeholder="Buscar por placa..."
+            [(ngModel)]="searchQuery"
+            (keyup.enter)="search()"
+          />
+        </div>
+        <div class="col-md-2">
+          <select
+            class="form-select"
+            [(ngModel)]="sucursalId"
+            (change)="search()"
+          >
+            <option [value]="null">Todas las sucursales</option>
+            <option *ngFor="let sucursal of sucursales" [value]="sucursal.id">
+              {{ sucursal.nombre }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <input
+            type="date"
+            class="form-control"
+            placeholder="Fecha inicio"
+            [(ngModel)]="fechaInicio"
+          />
+        </div>
+        <div class="col-md-2">
+          <input
+            type="date"
+            class="form-control"
+            placeholder="Fecha fin"
+            [(ngModel)]="fechaFin"
+          />
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-primary w-100" (click)="search()">
+            <i class="fas fa-search"></i> Buscar
+          </button>
+        </div>
+      </div>
+      <div class="mt-2">
+        <button class="btn btn-sm btn-outline-secondary" (click)="clearFilters()">
+          <i class="fas fa-times"></i> Limpiar filtros
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabla de placas -->
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Placa</th>
+            <th>Cliente</th>
+            <th>Visitas Totales</th>
+            <th>Próxima en Ciclo</th>
+            <th>Tickets</th>
+            <th>Total Gastado</th>
+            <th>Descuentos</th>
+            <th>Última Visita</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="loading">
+            <td colspan="9" class="text-center">
+              <div class="spinner-border spinner-border-sm"></div>
+              <span class="ms-2">Cargando...</span>
+            </td>
+          </tr>
+          <tr *ngIf="!loading && plates.length === 0">
+            <td colspan="9" class="text-center">
+              <i class="fas fa-inbox text-muted"></i>
+              <p class="mb-0">No hay placas disponibles</p>
+            </td>
+          </tr>
+          <tr *ngFor="let plate of plates">
+            <td><strong>{{ plate.plate }}</strong></td>
+            <td>{{ plate.customer?.nombre || '-' }}</td>
+            <td>
+              <span class="badge bg-info">{{ plate.totalVisits }}</span>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="{'bg-success': plate.eligibleForDiscount, 'bg-warning': !plate.eligibleForDiscount}">
+                {{ plate.nextInCycle }}/6
+              </span>
+            </td>
+            <td>{{ plate.totalTickets || 0 }}</td>
+            <td>{{ formatCurrency(plate.totalGastado) }}</td>
+            <td>
+              <span class="badge bg-success" *ngIf="plate.descuentosAplicados > 0">
+                {{ plate.descuentosAplicados }} ({{ formatCurrency(plate.totalDescuentos) }})
+              </span>
+              <span *ngIf="plate.descuentosAplicados === 0">-</span>
+            </td>
+            <td>{{ formatDate(plate.lastVisitAt) }}</td>
+            <td>
+              <button class="btn btn-sm btn-primary" (click)="viewPlateDetails(plate.plate)">
+                <i class="fas fa-eye"></i> Ver Detalles
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginación -->
+    <div class="pagination-container mt-3" *ngIf="totalPages > 1">
+      <nav>
+        <ul class="pagination justify-content-center">
+          <li class="page-item" [class.disabled]="currentPage === 0">
+            <a class="page-link" (click)="goToPage(currentPage - 1)" style="cursor: pointer;">Anterior</a>
+          </li>
+          <li class="page-item" *ngFor="let page of getPageNumbers()" [class.active]="page === currentPage">
+            <a class="page-link" (click)="goToPage(page)" style="cursor: pointer;">{{ page + 1 }}</a>
+          </li>
+          <li class="page-item" [class.disabled]="currentPage >= totalPages - 1">
+            <a class="page-link" (click)="goToPage(currentPage + 1)" style="cursor: pointer;">Siguiente</a>
+          </li>
+        </ul>
+      </nav>
+      <p class="text-center text-muted">
+        Mostrando {{ (currentPage * pageSize) + 1 }} - {{ Math.min((currentPage + 1) * pageSize, totalElements) }} de {{ totalElements }} placas
+      </p>
+    </div>
+  </main>
+</div>
+
+<!-- Modal de detalles -->
+<div class="modal fade" id="plateDetailsModal" tabindex="-1" aria-labelledby="plateDetailsModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="plateDetailsModalLabel">
+          <i class="fas fa-car me-2"></i>
+          Detalles de Placa: <strong>{{ selectedPlate }}</strong>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeDetails()" aria-label="Cerrar"></button>
+      </div>
+      
+      <div class="modal-body" *ngIf="loadingDetails">
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary"></div>
+          <p class="mt-3">Cargando detalles...</p>
+        </div>
+      </div>
+
+      <div class="modal-body" *ngIf="!loadingDetails && plateDetails">
+        <!-- Estadísticas generales -->
+        <div class="stats-section mb-4">
+          <h6 class="mb-3">Estadísticas Generales</h6>
+          <div class="row g-3">
+            <div class="col-md-3">
+              <div class="stat-card">
+                <small>Visitas Totales</small>
+                <strong>{{ plateDetails.loyalty?.totalVisits || 0 }}</strong>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="stat-card">
+                <small>Próxima en Ciclo</small>
+                <strong>{{ plateDetails.loyalty?.nextInCycle || 0 }}/6</strong>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="stat-card">
+                <small>Total Gastado</small>
+                <strong>{{ formatCurrency(plateDetails.stats?.totalGastado) }}</strong>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="stat-card">
+                <small>Descuentos Aplicados</small>
+                <strong>{{ plateDetails.stats?.descuentosAplicados || 0 }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contadores por sucursal -->
+        <div class="counters-section mb-4" *ngIf="plateDetails.counters && plateDetails.counters.length > 0">
+          <h6 class="mb-3">Contadores por Sucursal</h6>
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+              <thead class="table-light">
+                <tr>
+                  <th>Sucursal</th>
+                  <th>Visitas</th>
+                  <th>Ciclos</th>
+                  <th>Última Visita</th>
+                  <th>Última Redención</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let counter of plateDetails.counters">
+                  <td>{{ counter.sucursalNombre }}</td>
+                  <td>{{ counter.visitsPaidCount }}</td>
+                  <td>{{ counter.cycleCount }}</td>
+                  <td>{{ formatDate(counter.lastVisitAt) }}</td>
+                  <td>{{ formatDate(counter.lastRedeemAt) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Historial de órdenes -->
+        <div class="orders-section">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0">Historial de Órdenes</h6>
+            <span class="badge bg-primary">{{ plateOrdersTotal }} tickets</span>
+          </div>
+          
+          <div class="table-responsive">
+            <table class="table table-sm table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th>#</th>
+                  <th>Número de Ticket</th>
+                  <th>Fecha y Hora</th>
+                  <th>Monto Vendido</th>
+                  <th>Sucursal</th>
+                  <th>Método Pago</th>
+                  <th>Descuento 6ª</th>
+                  <th>Items</th>
+                </tr>
+              </thead>
+              <tbody>
+                <ng-container *ngFor="let order of plateOrders; let i = index">
+                  <tr>
+                    <td class="text-muted">
+                      <small>#{{ (plateOrdersPage * 20) + i + 1 }}</small>
+                    </td>
+                    <td>
+                      <strong class="text-primary">{{ order.numeroRecibo || '-' }}</strong>
+                      <span *ngIf="order.loyaltyApplied" class="badge bg-info ms-1" title="Descuento 6ª visita aplicado">6ª</span>
+                    </td>
+                    <td>
+                      <div>{{ formatDate(order.fecha) }}</div>
+                    </td>
+                    <td>
+                      <strong class="text-success">{{ formatCurrency(order.total) }}</strong>
+                    </td>
+                    <td>
+                      <span class="badge bg-secondary">{{ order.sucursal?.nombre || '-' }}</span>
+                    </td>
+                    <td>
+                      <span class="badge" [ngClass]="{'bg-success': order.metodoPago === 'Efectivo', 'bg-primary': order.metodoPago !== 'Efectivo'}">
+                        {{ order.metodoPago }}
+                      </span>
+                    </td>
+                    <td>
+                      <span *ngIf="order.loyaltyApplied" class="badge bg-success">
+                        {{ formatCurrency(order.loyaltyDiscountAmount) }}
+                      </span>
+                      <span *ngIf="!order.loyaltyApplied" class="text-muted">-</span>
+                    </td>
+                    <td>
+                      <button 
+                        class="btn btn-sm btn-outline-info" 
+                        (click)="toggleOrderItems(order.id)"
+                        *ngIf="order.productos && order.productos.length > 0"
+                      >
+                        <i class="fas" [ngClass]="isOrderExpanded(order.id) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                        Items ({{ order.productos.length }})
+                      </button>
+                      <span *ngIf="!order.productos || order.productos.length === 0" class="text-muted">-</span>
+                    </td>
+                  </tr>
+                  <!-- Fila expandible con items -->
+                  <tr *ngIf="isOrderExpanded(order.id) && order.productos && order.productos.length > 0">
+                    <td colspan="8" class="p-0">
+                      <div class="order-items-detail p-3 bg-light">
+                        <h6 class="mb-3">
+                          <i class="fas fa-shopping-cart me-2"></i>
+                          Items del Ticket {{ order.numeroRecibo }}
+                        </h6>
+                        <table class="table table-sm table-bordered mb-0">
+                          <thead class="table-light">
+                            <tr>
+                              <th>Producto</th>
+                              <th class="text-center">Cantidad</th>
+                              <th class="text-end">Precio Unitario</th>
+                              <th class="text-end">Subtotal</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr *ngFor="let producto of order.productos">
+                              <td>{{ producto.nombreProducto || producto.producto?.nombre || '-' }}</td>
+                              <td class="text-center">{{ producto.cantidad || 0 }}</td>
+                              <td class="text-end">{{ formatCurrency(producto.precioProducto || producto.producto?.precio || 0) }}</td>
+                              <td class="text-end">
+                                <strong>{{ formatCurrency((producto.precioProducto || producto.producto?.precio || 0) * (producto.cantidad || 0)) }}</strong>
+                              </td>
+                            </tr>
+                          </tbody>
+                          <tfoot class="table-light">
+                            <tr>
+                              <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                              <td class="text-end"><strong class="text-success">{{ formatCurrency(order.total) }}</strong></td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    </td>
+                  </tr>
+                </ng-container>
+                <tr *ngIf="plateOrders.length === 0">
+                  <td colspan="8" class="text-center text-muted py-3">
+                    <small>No hay órdenes en esta página</small>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Paginación de órdenes -->
+          <div class="pagination-container mt-3 mb-2" *ngIf="plateOrdersTotalPages > 1">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <small class="text-muted">
+                  Mostrando {{ (plateOrdersPage * 20) + 1 }} - {{ Math.min((plateOrdersPage + 1) * 20, plateOrdersTotal) }} de {{ plateOrdersTotal }} órdenes
+                </small>
+              </div>
+              <nav>
+                <ul class="pagination pagination-sm mb-0">
+                  <li class="page-item" [class.disabled]="plateOrdersPage === 0">
+                    <a class="page-link" (click)="loadPlateOrdersPage(plateOrdersPage - 1)" style="cursor: pointer;">Anterior</a>
+                  </li>
+                  <li class="page-item" *ngFor="let page of getOrderPageNumbers()" [class.active]="page === plateOrdersPage">
+                    <a class="page-link" (click)="loadPlateOrdersPage(page)" style="cursor: pointer;">{{ page + 1 }}</a>
+                  </li>
+                  <li class="page-item" [class.disabled]="plateOrdersPage >= plateOrdersTotalPages - 1">
+                    <a class="page-link" (click)="loadPlateOrdersPage(plateOrdersPage + 1)" style="cursor: pointer;">Siguiente</a>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeDetails()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>

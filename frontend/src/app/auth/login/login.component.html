@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trinity Platform - Login</title>
+</head>
+
+<body>
+  <div class="main-container">
+    <div class="title-container">
+      <h1>Bienvenido a Trinity Platform</h1>
+      <p>La solución tecnológica para tu empresa.</p>
+    </div>
+
+    <div class="login-box">
+      <div class="logo-container">
+        <h1 class="trinity-logo">Trinity</h1>
+      </div>
+      <h2>Login</h2>
+      <form (ngSubmit)="onLogin()" #loginForm="ngForm">
+        <div class="form-field">
+          <label>Correo</label>
+          <input type="email" [(ngModel)]="email" name="email" required #emailInput="ngModel">
+        </div>
+        <div class="form-field">
+          <label>Contraseña</label>
+          <input type="password" [(ngModel)]="password" name="password" required #passwordInput="ngModel">
+        </div>
+        <button type="submit" [disabled]="loginForm.invalid">
+          Iniciar Sesión
+        </button>
+      </form>
+    </div>
+  </div>
+</body>
+
+</html>

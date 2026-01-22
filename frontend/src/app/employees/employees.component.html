@@ -1,0 +1,168 @@
+<div class="app-container" style="background-color: rgba(231, 231, 231);">
+  <div class="row g-0">
+    <!-- Sidebar -->
+    <app-sidebar></app-sidebar>
+
+    <!-- Contenido principal -->
+    <main class="main-content">
+      <div class="content-header">
+        <div class="header-title">
+          <h2>Empleados</h2>
+          <h5>Sucursal: {{ sucursalName || 'No asignada' }}</h5>
+        </div>
+        <div class="header-actions">
+          <button (click)="showAddModal();" class="btn btn-outline-success">
+            <i class="fas fa-plus"></i> AGREGAR
+          </button>
+        </div>
+      </div>
+      <div class="table-container">
+        <table class="table" id="dataTable" width="100%" cellspacing="0">
+          <thead>
+            <tr>
+              <th>Nombre Completo</th>
+              <th>Usuario</th>
+              <th>Correo</th>
+              <th>Rol</th>
+              <th>Activo?</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let employee of employees">
+              <td>{{ employee.nombreCompleto }}</td>
+              <td>{{ employee.username }}</td>
+              <td>{{ employee.email }}</td>
+              <td>{{ employee.rol.nombre }}</td>
+              <td>{{ employee.activo }}</td>
+              <td>
+                <button (click)="showEditModal(employee)" class="btn btn-secondary me-2">
+                  <i class="fas fa-pencil-alt"></i>
+                </button>
+                <button (click)="showDeleteModal(employee)" class="btn btn-danger">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Modales -->
+<!-- Modal for adding a new employee -->
+<div class="modal fade" id="addEmployeeModal" tabindex="-1" aria-labelledby="addEmployeeModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addEmployeeModalLabel">Añadir Empleado</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="mb-3">
+            <label for="nombreCompletoAdd" class="form-label">Nombre Completo</label>
+            <input [(ngModel)]="newEmployee.nombreCompleto" type="text" class="form-control" id="nombreCompletoAdd" name="nombreCompletoAdd" required>
+          </div>
+          <div class="mb-3">
+            <label for="username" class="form-label">Nombre de Usuario</label>
+            <input [(ngModel)]="newEmployee.username" type="text" class="form-control" id="username" name="username" required>
+          </div>
+          <div class="mb-3">
+            <label for="email" class="form-label">Correo</label>
+            <input [(ngModel)]="newEmployee.email" type="email" class="form-control" id="email" name="email" required>
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Contraseña</label>
+            <input [(ngModel)]="newEmployee.password" type="password" class="form-control" id="password" name="password" required>
+          </div>
+          <div class="mb-3">
+            <label for="rol" class="form-label">Rol</label>
+            <select [(ngModel)]="newEmployee.rol" class="form-select" id="rol" name="rol" required>
+              <option *ngFor="let role of roles" [ngValue]="role">{{ role.nombre }}</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="activo" class="form-label">Activo?</label>
+            <select [(ngModel)]="newEmployee.activo" class="form-select" id="activo" name="activo" required>
+              <option [value]="true">Sí</option>
+              <option [value]="false">No</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-primary" [disabled]="loading" (click)="addEmployee()">Añadir</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Modal para eliminar Empleado -->
+<div class="modal fade" id="deleteEmployeeModal" tabindex="-1" aria-labelledby="deleteEmployeeModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteEmployeeModalLabel">Eliminar Empleado</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <h5>¿Está seguro que desea eliminar a <strong>{{ selectedEmployee.nombreCompleto }}</strong>?</h5>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-danger" (click)="deleteEmployee()">Eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Modal para editar Empleado -->
+<div class="modal fade" id="editEmployeeModal" tabindex="-1" aria-labelledby="editEmployeeModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Editar Empleado</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="mb-3">
+            <label for="nombreCompletoEdit" class="form-label">Nombre Completo:</label>
+            <input [(ngModel)]="selectedEmployee.nombreCompleto" name="nombreCompleto" type="text" class="form-control" id="nombreCompletoEdit" required>
+          </div>
+          <div class="mb-3">
+            <label for="usernameEdit" class="form-label">Nombre de Usuario:</label>
+            <input [(ngModel)]="selectedEmployee.username" name="username" type="text" class="form-control" id="usernameEdit" required>
+          </div>
+          <div class="mb-3">
+            <label for="emailEdit" class="form-label">Correo Electrónico:</label>
+            <input [(ngModel)]="selectedEmployee.email" name="email" type="email" class="form-control" id="emailEdit" required>
+          </div>
+          <div class="mb-3">
+            <label for="rolEdit" class="form-label">Rol:</label>
+            <select [(ngModel)]="selectedEmployee.rol" name="rol" class="form-select" id="rolEdit" required>
+              <option *ngFor="let role of roles" [ngValue]="role">{{ role.nombre }}</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="activoEdit" class="form-label">¿Activo?</label>
+            <select [(ngModel)]="selectedEmployee.activo" name="activo" class="form-select" id="activoEdit" required>
+              <option [ngValue]="true">Sí</option>
+              <option [ngValue]="false">No</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="newPasswordEdit" class="form-label">Nueva Contraseña (opcional):</label>
+            <input [(ngModel)]="selectedEmployee.newPassword" name="newPassword" type="password" class="form-control" id="newPasswordEdit">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-success" (click)="editEmployee()">Aceptar</button>
+      </div>
+    </div>
+  </div>
+</div>

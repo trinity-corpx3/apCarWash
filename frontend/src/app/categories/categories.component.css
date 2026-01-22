@@ -1,0 +1,119 @@
+.sqr-login {
+    background-color: rgba(210, 210, 210, .6);
+    padding: 3vh;
+    border-radius: 30px;
+    height: 350px;
+    width: 100%;
+    border: none;
+  }
+.sqr-primary {
+    background-color: rgba(210, 210, 210, .6);
+    padding: 3vh;
+    border-radius: 30px;
+    height: 250px;
+    width: 100%;
+    border: none;
+  }
+.menuside{
+    position: sticky;
+    height: calc(100% - 80px);
+}
+#topbar{
+    height: 80px;
+    position: sticky;
+    margin-top: 0;
+}
+#sidebar{
+    padding-bottom: 0;
+    top: 5rem;
+    padding-top: 0;
+    z-index: 5;
+    background-color: #c92020;
+    transition: all .2s ease;
+    box-shadow: 0 40px 40px 0 rgba(82, 63, 105, .1);
+}
+#white-button {
+    background-color: white;
+    color: black;
+    border: none;
+    border-radius: 15px;
+    padding: 1vh;
+    text-decoration: none;
+}
+#white-button:hover {
+    background-color: rgba(255, 255, 255, .0);
+    border: 2px solid rgb(65, 122, 235);
+}
+.table-style{
+    background-color: rgba(210, 210, 210, .7);
+    border-radius: 10px;
+    overflow-x: auto;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+}
+.table-style th{
+    font-size: 24px;
+    text-align: center;
+}
+.table-style tr{
+    font-size: 19px;
+    text-align: center;
+
+}
+@media (max-width: 575.98px) {
+    .table-responsive-sm {
+      display: block;
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .table-responsive-sm > .table-bordered {
+      border: 0;
+    }
+  }
+  @media (max-width: 767.98px) {
+    .table-responsive-md {
+      display: block;
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .table-responsive-md > .table-bordered {
+      border: 0;
+    }
+  }
+  @media (max-width: 991.98px) {
+    .table-responsive-lg {
+      display: block;
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .table-responsive-lg > .table-bordered {
+      border: 0;
+    }
+  }
+  @media (max-width: 1199.98px) {
+    .table-responsive-xl {
+      display: block;
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .table-responsive-xl > .table-bordered {
+      border: 0;
+    }
+  }
+
+  .table-responisve{
+    margin-left: auto;
+    margin-right: auto;
+    padding-top: 10vh;
+    width: 75%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .table-responsive > .table-bordered {
+    border: 0;
+  }
+  

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bootstrap demo</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
+</head>
+
+<body style="background-color: rgba(231, 231, 231);">
+  <div class="container-fluid">
+    <div class="row">
+
+
+      <div class="col-sm auto min-vh-100">
+        <!-- content -->
+        <div class="table-responisve">
+          <div class="row">
+            <div class="col-sm-10" style="padding-top: 5%;">
+              <h1>Ordenes de Venta</h1>
+            </div>
+            <div class="col-sm-2"></div>
+          </div>
+
+          <!-- <div class="filter-bar">
+              <input type="text" placeholder="Customer name or product">
+              <div class="filter-buttons">
+                <button data-bs-toggle="modal" data-bs-target="#filterModal"><i class='fas fa-filter' data-bs-toggle="modal" data-bs-target="#filterModal"></i></button>
+                <div class="all-sellers-dropdown">
+                  <span>All sellers</span>
+                </div>
+              </div>
+            </div>-->
+
+          <div class="sales-summary">
+            <div class="summary-item">
+              <h4>Hoy: <span class="sales-count">{{ todaySalesCount }} ventas</span></h4>
+              <p class="sale-amount">${{ todaySalesAmount | number:'1.2-2' }}</p>
+              <!-- Botón para exportar las ventas de hoy a CSV -->
+              <button class="btn btn-primary mt-2" (click)="exportToCSV('today')">Exportar CSV</button>
+            </div>
+
+            <div class="summary-item">
+              <h4>Ayer: <span class="sales-count">{{ yesterdaySalesCount }} ventas</span></h4>
+              <p class="sale-amount">${{ yesterdaySalesAmount | number:'1.2-2' }}</p>
+              <!-- Botón para exportar las ventas de ayer a CSV -->
+              <button class="btn btn-primary mt-2" (click)="exportToCSV('yesterday')">Exportar CSV</button>
+            </div>
+
+            <div class="summary-item">
+              <h4>Esta semana: <span class="sales-count">{{ weekSalesCount }} ventas</span></h4>
+              <p class="sale-amount">${{ weekSalesAmount | number:'1.2-2' }}</p>
+              <!-- Botón para exportar las ventas de esta semana a CSV -->
+              <button class="btn btn-primary mt-2" (click)="exportToCSV('week')">Exportar CSV</button>
+            </div>
+
+            <div class="summary-item">
+              <h4>Este mes: <span class="sales-count">{{ monthSalesCount }} ventas</span></h4>
+              <p class="sale-amount">${{ monthSalesAmount | number:'1.2-2' }}</p>
+              <!-- Botón para exportar las ventas de este mes a CSV -->
+              <button class="btn btn-primary mt-2" (click)="exportToCSV('month')">Exportar CSV</button>
+            </div>
+          </div>
+
+          <div class="table-controls">
+            <label for="recordsPerPage">Mostrar</label>
+            <select id="recordsPerPage" [(ngModel)]="recordsPerPage" (change)="onRecordsPerPageChange()">
+              <option value="20">20</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+            registros por página
+          </div>
+
+
+          <table class="table table-striped table-style" id="dataTable" width="100%" cellspacing="0">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Recibo</th>
+                <th>Total</th>
+                <th>Fecha</th>
+                <th>Método de Pago</th>
+                <th>Cantidad Recibida</th>
+                <th>Cambio</th>
+                <th>Sucursal</th>
+                <th>Placa</th>
+                <th>Cajero</th>
+                <th>Estado</th>
+                <th>Items</th>
+                <th>Acciones</th>
+
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Loop through each order -->
+              <tr *ngFor="let order of orders">
+                <td>{{ order?.id }}</td>
+                <td>{{ order?.numeroRecibo }}</td>
+                <td>{{ order?.total | currency }}</td>
+                <td>{{ order?.fecha }}</td>
+                <td>{{ order?.metodoPago }}</td>
+                <td>{{ order?.cantidadRecibida }}</td>
+                <td>{{ order?.cambio }}</td>
+                <td>{{ order?.sucursal }}</td>
+                <td>{{ order?.placa }}</td>
+                <td>{{ order?.cajero }}</td>
+                <td>{{ order?.estado }}</td>
+                <!-- Aquí se muestra el número de productos y un botón para desplegar los detalles -->
+                <td>
+                  <span (click)="toggleItemDetails(order)" class="items-count">
+                    {{ order.productos?.length }} {{ order.productos?.length === 1 ? 'item' : 'items' }}
+                  </span>
+
+                  <!-- Si order.showDetails es true, se muestran los productos -->
+                  <div *ngIf="order.showDetails" class="order-details">
+                    <ul>
+                      <li *ngFor="let product of order.productos">
+                        {{ product.cantidad }} X {{ product.nombreProducto }} - {{ product.precioProducto | currency }}
+                      </li>
+                    </ul>
+                  </div>
+                </td>
+                <td>
+                  <button class="btn btn-secondary" style="font-size: 12px;" (click)="openReceiptModal(order)">
+                    Ver Recibo
+                  </button>
+                </td>
+
+              </tr>
+            </tbody>
+          </table>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+    integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+    crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
+    integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy"
+    crossorigin="anonymous"></script>
+
+
+
+  <!-- Modal para ver el recibo -->
+  <div class="modal fade" id="receiptModal" tabindex="-1" aria-labelledby="receiptModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="receiptModalLabel">Recibo de Compra</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Información del negocio -->
+          <h5 class="text-center">AUTO-LAVADO TRINITY</h5>
+          <h6 class="text-center">¡Gracias por su Compra!</h6>
+          <p class="text-center">Domicilio Fiscal:</p>
+          <p class="text-center">Av. Tecnológico No. 1500, Col. San Salvador,</p>
+          <p class="text-center">CP: 50130, Toluca, Estado de México.</p>
+          <p class="text-center">RFC: ATR230101T99</p>
+
+          <!-- Número de recibo -->
+          <h2 class="text-center">RECIBO #{{ receiptNumber }}</h2>
+
+          <p class="text-center">Fecha y Hora: {{ selectedOrder?.fecha }}</p>
+          <p class="text-center">Atendido por: {{ selectedOrder?.cajero }}</p>
+
+          <!-- Nuevos campos -->
+          <p class="text-center">Sucursal: {{ selectedOrder?.sucursal }}</p>
+          <p class="text-center">Placa del vehículo: {{ selectedOrder?.placa }}</p>
+
+          <!-- Notas -->
+          <p class="text-center"><strong>Nota:</strong> {{ selectedOrder?.nota }}</p>
+
+          <!-- Detalles de la compra -->
+          <p class="text-center">{{ selectedOrder?.productos?.length }} items</p>
+          <hr>
+          <div class="item" *ngFor="let item of selectedOrder?.productos">
+            <span>{{ item?.nombreProducto }}</span>
+            <span>(x){{ item?.cantidad }}</span>
+            <span>${{ item?.precioProducto | number: '1.2-2' }}</span>
+          </div>
+          <hr>
+
+          <!-- Total de la compra -->
+          <div class="item">
+            <strong>Total:</strong>
+            <strong>${{ selectedOrder.total | number: '1.2-2' }}</strong>
+          </div>
+
+          <!-- Método de Pago -->
+          <div class="item">
+            <span>Método de Pago:</span>
+            <span>{{ selectedOrder.metodoPago }}</span>
+          </div>
+
+          <!-- Mostrar el cambio si el método de pago es efectivo -->
+          <div *ngIf="selectedOrder.metodoPago === 'Efectivo'" class="item">
+            <strong>Cambio:</strong>
+            <strong>${{ selectedOrder.cambio | number: '1.2-2' }}</strong>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          <button type="button" class="btn btn-primary" (click)="printReceipt()">Imprimir</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Modal para el filtro -->
+  <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="filterModalLabel">Filter Orders</h5>
+          <button type="button" class="btn-close" (click)="closeModal()" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Filtros por fecha -->
+          <div class="form-group">
+            <label for="startDate">Start Date</label>
+            <input type="date" class="form-control" [(ngModel)]="filter.startDate" id="startDate"
+              placeholder="Start Date">
+          </div>
+          <div class="form-group">
+            <label for="endDate">End Date</label>
+            <input type="date" class="form-control" [(ngModel)]="filter.endDate" id="endDate" placeholder="End Date">
+          </div>
+
+          <!-- Filtros por periodo -->
+          <div class="form-group">
+            <label for="period">Period</label>
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" [(ngModel)]="filter.today" id="today">
+              <label class="form-check-label" for="today">Today</label>
+            </div>
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" [(ngModel)]="filter.yesterday" id="yesterday">
+              <label class="form-check-label" for="yesterday">Yesterday</label>
+            </div>
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" [(ngModel)]="filter.thisWeek" id="thisWeek">
+              <label class="form-check-label" for="thisWeek">This Week</label>
+            </div>
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" [(ngModel)]="filter.thisMonth" id="thisMonth">
+              <label class="form-check-label" for="thisMonth">This Month</label>
+            </div>
+          </div>
+
+          <!-- Filtros por método de pago -->
+          <div class="form-group">
+            <label for="paymentMethod">Payment Method</label>
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" [(ngModel)]="filter.paymentMethods.cash" id="cash">
+              <label class="form-check-label" for="cash">Cash</label>
+            </div>
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" [(ngModel)]="filter.paymentMethods.creditCard"
+                id="creditCard">
+              <label class="form-check-label" for="creditCard">Credit Card</label>
+            </div>
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" [(ngModel)]="filter.paymentMethods.debitCard"
+                id="debitCard">
+              <label class="form-check-label" for="debitCard">Debit Card</label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="discardFilter()">Discard</button>
+          <button type="button" class="btn btn-primary" (click)="applyFilter(); closeModal()">Filter</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+</body>
+
+</html>

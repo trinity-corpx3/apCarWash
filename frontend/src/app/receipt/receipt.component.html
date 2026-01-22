@@ -1,0 +1,70 @@
+<div class="receipt-container">
+    <div class="receipt-header">
+        <!-- Encabezado de la tienda -->
+        <h2 class="text-center">AUTO-LAVADO TRINITY</h2>
+        <p class="text-center">¡Gracias por su Compra!</p>
+        <p class="text-center">Domicilio Fiscal:</p>
+        <p class="text-center">
+            Av. Tecnológico No. 1500,<br>
+            Col. San Salvador, CP: 50130, Toluca, Estado de México.<br>
+            RFC: ATR230101T99<br>
+            Tienda Num: 1
+        </p>
+    </div>
+
+    <div class="receipt-body">
+        <h2 class="text-center">Recibo #{{ receiptNumber }}</h2>
+        <p class="text-center">{{ cart.length }} item(s)</p>
+        <p class="text-center">Atendido por: {{ userName }}</p>
+        <p class="text-center">Fecha y Hora: {{ today | date:'medium' }}</p>
+        <hr>
+
+        <!-- Mostrar los productos del carrito -->
+        <div class="item" *ngFor="let product of cart">
+            <span>{{ product.nombre }} x{{ product.cantidad }}</span>
+            <span>${{ product.precio * product.cantidad | number:'1.2-2' }}</span>
+        </div>
+        <hr>
+
+        <!-- Mostrar el total -->
+        <div class="item">
+            <strong>Total:</strong>
+            <strong>${{ total | number:'1.2-2' }}</strong>
+        </div>
+
+        <div class="item">
+            <span>Pagado con {{ paymentMethod }}:</span> <!-- Mostrar el método de pago -->
+            <span>${{ total | number:'1.2-2' }}</span>
+        </div>
+
+        <!-- Mostrar el cambio si el método de pago es efectivo -->
+        <div *ngIf="paymentMethod === 'Efectivo'" class="item">
+            <strong>Cambio:</strong>
+            <strong>${{ change | number: '1.2-2' }}</strong>
+        </div>
+    </div>
+
+    <div class="receipt-footer">
+        <hr>
+        <p>{{ today | date:'medium' }}</p> <!-- Fecha actual -->
+    </div>
+</div>
+
+<div class="receipt-buttons">
+    <button>
+        <i class="fas fa-copy"></i>
+        Copy image
+    </button>
+    <button>
+        <i class="fas fa-file-pdf"></i>
+        Download PDF
+    </button>
+    <button>
+        <i class="fas fa-envelope"></i>
+        Send by email
+    </button>
+    <button>
+        <i class="fas fa-print"></i>
+        Print
+    </button>
+</div>

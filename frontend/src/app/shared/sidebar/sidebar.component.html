@@ -1,0 +1,35 @@
+<div id="sidebar" [class.collapsed]="isCollapsed">
+  <!-- Toggle button -->
+  <button class="sidebar-toggle" (click)="toggleSidebar()" title="Colapsar/Expandir">
+    <i class="fas" [ngClass]="isCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'"></i>
+  </button>
+
+  <!-- Navegación por secciones -->
+  <nav class="sidebar-nav">
+    <div *ngFor="let section of navSections" class="nav-section">
+      <div class="section-title" *ngIf="!isCollapsed">{{ section.title }}</div>
+      <a
+        *ngFor="let item of section.items"
+        [routerLink]="[item.route]"
+        class="nav-link"
+        [class.active]="isActive(item.route)"
+        [title]="isCollapsed ? item.label : ''"
+      >
+        <i class="fas" [ngClass]="item.icon"></i>
+        <span *ngIf="!isCollapsed">{{ item.label }}</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- Usuario (abajo) -->
+  <div class="user-menu">
+    <a href="#" class="nav-link" (click)="toggleUserDropdown($event)" [title]="isCollapsed ? 'USUARIO' : ''">
+      <i class="fas fa-user-circle"></i>
+      <span *ngIf="!isCollapsed">USUARIO</span>
+    </a>
+    <div *ngIf="showUserDropdown" class="user-dropdown">
+      <button class="btn btn-danger w-100" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </div>
+</div>
+

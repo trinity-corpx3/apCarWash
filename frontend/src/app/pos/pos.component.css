@@ -48,7 +48,7 @@ body {
 
 .header .fas.fa-home {
     font-size: 24px;
-    color: #002244;
+    color: #550000;
     cursor: pointer;
     margin-left: 20px;
     transition: transform 0.2s ease;
@@ -72,7 +72,7 @@ body {
 }
 
 .daily-stats i.fas.fa-chart-bar {
-    color: #20c997;
+    color: #990000;
     font-size: 16px;
 }
 
@@ -161,12 +161,12 @@ body {
 
 .plate-input:focus {
     outline: none;
-    border-color: #20c997;
+    border-color: #990000;
     box-shadow: 0 0 0 2px rgba(32, 201, 151, 0.1);
 }
 
 .plate-icon {
-    color: #20c997;
+    color: #990000;
     font-size: 18px;
     flex-shrink: 0;
 }
@@ -235,7 +235,7 @@ body {
 }
 
 .products .product-item .product-quantity {
-    background-color: #20c997;
+    background-color: #990000;
     color: #fff;
     padding: 5px;
     border-radius: 5px;
@@ -266,7 +266,7 @@ body {
 }
 
 .cart .cart-header .cart-customer {
-    color: #20c997;
+    color: #990000;
     cursor: pointer;
 }
 
@@ -319,7 +319,7 @@ body {
 }
 
 .cart .cart-summary .cart-discount {
-    color: #20c997;
+    color: #990000;
     cursor: pointer;
     margin-bottom: 10px;
 }
@@ -331,27 +331,27 @@ body {
 }
 
 .cart .cart-summary .cart-checkout .btn {
-    background-color: #20c997;
+    background-color: #990000;
     color: #fff;
 }
 
 .btn-custom-green-fs {
-    background-color: #20c997;
+    background-color: #990000;
 }
 
 
 .btn-custom-green-fs:hover {
-    background-color: #20c997;
+    background-color: #990000;
     color: white;
 }
 
 .btn-custom-ds {
-    background-color: #002244;
+    background-color: #550000;
 }
 
 
 .btn-custom-ds:hover {
-    background-color: #002244;
+    background-color: #550000;
     color: white;
 }
 
@@ -485,7 +485,7 @@ body {
 }
 
 #facturaModal .modal-header {
-    background-color: #20c997;
+    background-color: #990000;
     color: white;
     border-bottom: none;
 }
@@ -495,7 +495,7 @@ body {
 }
 
 #facturaModal .btn-success {
-    background-color: #20c997;
+    background-color: #990000;
     border: none;
 }
 
@@ -509,7 +509,7 @@ body {
 }
 
 #facturaModal .modal-header {
-    background-color: #20c997;
+    background-color: #990000;
     color: white;
     border-bottom: none;
 }
@@ -519,7 +519,7 @@ body {
 }
 
 #facturaModal .btn-success {
-    background-color: #20c997;
+    background-color: #990000;
     border: none;
 }
 
@@ -669,7 +669,7 @@ body {
 }
 
 .product-quantity .btn-success {
-    background-color: #20c997;
+    background-color: #990000;
     border: none;
     padding: 8px 16px;
     border-radius: 8px;
@@ -821,7 +821,7 @@ body {
 }
 
 .payment-method-option i.fas.fa-money-bill-wave {
-    color: #20c997;
+    color: #990000;
     /* Verde para efectivo */
 }
 
@@ -860,7 +860,7 @@ body {
 }
 
 .payment-view .btn-custom-green-fs {
-    background-color: #20c997;
+    background-color: #990000;
     color: white;
     border: none;
 }

@@ -30,7 +30,7 @@
       <i class="fas fa-home" (click)="goToSuperAdminMenu()"></i>
     </div>
   </div>
-  
+
   <!--<div class="search-bar">
     <input class="form-control" placeholder="Nombre o código" type="text"/>
     <div class="btn-group">
@@ -43,125 +43,124 @@
 
   <div class="d-flex">
     <div class="products flex-grow-1">
-        <!-- Campo de Placa del Vehículo -->
-        <div class="plate-input-section">
-          <label for="plateInput" class="plate-label">Placa del Vehículo</label>
-          <div class="plate-input-wrapper">
-            <input
-              type="text"
-              id="plateInput"
-              class="form-control plate-input"
-              placeholder="Ingrese la placa (opcional)"
-              [(ngModel)]="placa"
-              (blur)="consultarVentasPorPlaca(placa)"
-              maxlength="15"
-            />
-            <i class="fas fa-car plate-icon" *ngIf="placa && placa.trim() !== ''"></i>
-          </div>
-          <small class="plate-hint" *ngIf="!placa || placa.trim() === ''">Opcional: Ingrese la placa para aplicar sistema de lealtad</small>
-          
-          <!-- Badge de info rápida de placa -->
-          <div class="plate-quick-badge" *ngIf="placa && placa.trim() !== '' && plateQuickInfo">
-            <div class="badge-content">
-              <i class="fas fa-info-circle"></i>
-              <span class="badge-text">
-                <strong>{{ plateQuickInfo.totalVisits }}</strong> visitas
-                <span *ngIf="plateQuickInfo.cyclesCompleted > 0" class="text-muted">
-                  · <strong>{{ plateQuickInfo.cyclesCompleted }}</strong> ciclo(s) completado(s)
-                </span>
-                <span *ngIf="plateQuickInfo.nextInCycle === 6 && !plateQuickInfo.eligibleForDiscount" class="text-success">
-                  · <strong>¡Esta venta aplicará descuento!</strong>
-                </span>
-                <span *ngIf="plateQuickInfo.visitsUntilDiscount > 0 && plateQuickInfo.nextInCycle !== 6" class="text-warning">
-                  · Faltan <strong>{{ plateQuickInfo.visitsUntilDiscount }}</strong> para descuento
-                </span>
-                <span *ngIf="plateQuickInfo.eligibleForDiscount" class="text-success">
-                  · <strong>¡Elegible para descuento!</strong>
-                </span>
+      <!-- Campo de Placa del Vehículo -->
+      <div class="plate-input-section">
+        <label for="plateInput" class="plate-label">Placa del Vehículo</label>
+        <div class="plate-input-wrapper">
+          <input type="text" id="plateInput" class="form-control plate-input" placeholder="Ingrese la placa (opcional)"
+            [(ngModel)]="placa" (blur)="consultarVentasPorPlaca(placa)" maxlength="15" />
+          <i class="fas fa-car plate-icon" *ngIf="placa && placa.trim() !== ''"></i>
+        </div>
+        <small class="plate-hint" *ngIf="!placa || placa.trim() === ''">Opcional: Ingrese la placa para aplicar sistema
+          de lealtad</small>
+
+        <!-- Badge de info rápida de placa -->
+        <div class="plate-quick-badge" *ngIf="placa && placa.trim() !== '' && plateQuickInfo">
+          <div class="badge-content">
+            <i class="fas fa-info-circle"></i>
+            <span class="badge-text">
+              <strong>{{ plateQuickInfo.totalVisits }}</strong> visitas
+              <span *ngIf="plateQuickInfo.cyclesCompleted > 0" class="text-muted">
+                · <strong>{{ plateQuickInfo.cyclesCompleted }}</strong> ciclo(s) completado(s)
               </span>
-            </div>
-          </div>
-          <div class="plate-quick-badge" *ngIf="placa && placa.trim() !== '' && loadingPlateInfo">
-            <div class="badge-content">
-              <div class="spinner-border spinner-border-sm me-2"></div>
-              <span>Cargando info...</span>
-            </div>
-          </div>
-          
-          <div *ngIf="placa && placa.trim() !== '' && plateQuickInfo && ventasTotales > 0" class="plate-info">
-            <small class="text-info">
-              <i class="fas fa-info-circle"></i> 
-              Visitas totales: {{ ventasTotales }} | Ciclos completados: {{ plateQuickInfo.cyclesCompleted || 0 }} | Próxima visita: {{ plateQuickInfo.nextInCycle }} de 6
-            </small>
+              <span *ngIf="plateQuickInfo.nextInCycle === 6 && !plateQuickInfo.eligibleForDiscount"
+                class="text-success">
+                · <strong>¡Esta venta aplicará descuento!</strong>
+              </span>
+              <span *ngIf="plateQuickInfo.visitsUntilDiscount > 0 && plateQuickInfo.nextInCycle !== 6"
+                class="text-warning">
+                · Faltan <strong>{{ plateQuickInfo.visitsUntilDiscount }}</strong> para descuento
+              </span>
+              <span *ngIf="plateQuickInfo.eligibleForDiscount" class="text-success">
+                · <strong>¡Elegible para descuento!</strong>
+              </span>
+            </span>
           </div>
         </div>
-        
-        <!-- Mostrar productos obtenidos del backend -->
-        <div class="product-item" *ngFor="let product of products">
-            <div class="product-info">
-                <div class="product-name">{{ product.nombre }}</div>
-                <div class="product-code">{{ product.descripcion }}</div>
-                <div class="product-code">ID:  {{ product.id }}</div>
-                
-            </div>
-            <div class="product-price" style="margin-right: 30px;">
-                ${{ product.precio | number:'1.2-2' }}
-            </div>
-            <div class="product-quantity">
-                <button class="btn btn-success" (click)="addToCart(product)">Añadir al Carrito</button>
-            </div>
+        <div class="plate-quick-badge" *ngIf="placa && placa.trim() !== '' && loadingPlateInfo">
+          <div class="badge-content">
+            <div class="spinner-border spinner-border-sm me-2"></div>
+            <span>Cargando info...</span>
+          </div>
         </div>
+
+        <div *ngIf="placa && placa.trim() !== '' && plateQuickInfo && ventasTotales > 0" class="plate-info">
+          <small class="text-info">
+            <i class="fas fa-info-circle"></i>
+            Visitas totales: {{ ventasTotales }} | Ciclos completados: {{ plateQuickInfo.cyclesCompleted || 0 }} |
+            Próxima visita: {{ plateQuickInfo.nextInCycle }} de 6
+          </small>
+        </div>
+      </div>
+
+      <!-- Mostrar productos obtenidos del backend -->
+      <div class="product-item" *ngFor="let product of products">
+        <div class="product-info">
+          <div class="product-name">{{ product.nombre }}</div>
+          <div class="product-code">{{ product.descripcion }}</div>
+          <div class="product-code">ID: {{ product.id }}</div>
+
+        </div>
+        <div class="product-price" style="margin-right: 30px;">
+          ${{ product.precio | number:'1.2-2' }}
+        </div>
+        <div class="product-quantity">
+          <button class="btn btn-success" (click)="addToCart(product)">Añadir al Carrito</button>
+        </div>
+      </div>
     </div>
 
     <div class="cart">
-        <div class="cart-header">
-            <div class="cart-title">Carrito de Ventas</div>
+      <div class="cart-header">
+        <div class="cart-title">Carrito de Ventas</div>
+      </div>
+
+      <!-- Si el carrito está vacío, mostrar el ícono de carrito vacío -->
+      <div *ngIf="cart.length === 0" class="empty-cart">
+        <img alt="Cart with an arrow pointing downwards" height="100"
+          src="https://cdn-icons-png.flaticon.com/512/1170/1170576.png" width="100" />
+        <h3>Tu carrito está vacío</h3>
+        <p>Haz click en los productos para agregarlos.</p>
+      </div>
+
+      <!-- Mostrar los productos en el carrito si no está vacío -->
+      <div *ngIf="cart.length > 0">
+        <div class="cart-item" *ngFor="let item of cart">
+          <div class="cart-info">
+            <div class="cart-name">{{ item.nombre }}</div>
+            x({{ item.cantidad | number:'1.2-2' }})
+            <!-- <div class="cart-code">{{ item.id }}</div> -->
+          </div>
+          <div class="cart-price">
+            Precio Unitario ${{ item.precio | number:'1.2-2' }}
+            <br>
+            ${{ item.precio * item.cantidad| number:'1.2-2' }}
+
+          </div>
+          <div class="cart-remove">
+            <i class="fas fa-times" (click)="removeFromCart(item)"></i>
+          </div>
         </div>
 
-        <!-- Si el carrito está vacío, mostrar el ícono de carrito vacío -->
-        <div *ngIf="cart.length === 0" class="empty-cart">
-            <img alt="Cart with an arrow pointing downwards" height="100" src="https://cdn-icons-png.flaticon.com/512/1170/1170576.png" width="100"/>
-            <h3>Tu carrito está vacío</h3>
-            <p>Haz click en los productos para agregarlos.</p>
-        </div>
+        <div class="cart-summary">
+          <div class="cart-total">
+            <div>{{ cart.length }} items</div>
+            <div style="margin-top: 20%;">Subtotal: ${{ calculateTotal() | number:'1.2-2' }}</div>
+          </div>
 
-        <!-- Mostrar los productos en el carrito si no está vacío -->
-        <div *ngIf="cart.length > 0">
-            <div class="cart-item" *ngFor="let item of cart">
-                <div class="cart-info">
-                    <div class="cart-name">{{ item.nombre }}</div>
-                    x({{ item.cantidad | number:'1.2-2' }})
-                   <!-- <div class="cart-code">{{ item.id }}</div> -->
-                </div>
-                <div class="cart-price">
-                Precio Unitario  ${{ item.precio | number:'1.2-2' }}
-                <br>
-                ${{ item.precio * item.cantidad| number:'1.2-2' }}
-                
-                </div>
-                <div class="cart-remove">
-                    <i class="fas fa-times" (click)="removeFromCart(item)"></i>
-                </div>
-            </div>
-
-            <div class="cart-summary" >
-                <div class="cart-total" >
-                    <div>{{ cart.length }} items</div>
-                    <div style="margin-top: 20%;">Subtotal: ${{ calculateTotal() | number:'1.2-2' }}</div>
-                </div>
-        
-                <div class="cart-total">
-                    <div>Total:</div>
-                    <div>${{ calculateTotal() | number:'1.2-2' }}</div>
-                </div>
-                <div class="cart-checkout">
-                    <button class="btn btn-danger" style="background-color: #c92020;" (click)="clearCart()"><i class="fas fa-trash"></i></button>
-                    <button class="btn btn-success" (click)="goToPayment()" [disabled]="cart.length === 0">Ir a Pagar</button>
-                </div>
-            </div>
+          <div class="cart-total">
+            <div>Total:</div>
+            <div>${{ calculateTotal() | number:'1.2-2' }}</div>
+          </div>
+          <div class="cart-checkout">
+            <button class="btn btn-danger" style="background-color: #c92020;" (click)="clearCart()"><i
+                class="fas fa-trash"></i></button>
+            <button class="btn btn-success" (click)="goToPayment()" [disabled]="cart.length === 0">Ir a Pagar</button>
+          </div>
         </div>
+      </div>
     </div>
-</div>
+  </div>
 </div>
 
 
@@ -180,19 +179,14 @@
         <div class="card">
           <div class="card-header">¿Alguna nota?</div>
           <div class="card-body">
-            <textarea class="form-control" placeholder="Escribe aquí de ser necesario" rows="2" [(ngModel)]="nota"></textarea>
+            <textarea class="form-control" placeholder="Escribe aquí de ser necesario" rows="2"
+              [(ngModel)]="nota"></textarea>
 
             <div class="note-config">
               <div class="note-name-group">
                 <label class="note-label" for="notaNombre">NOMBRE:</label>
-                <input
-                  id="notaNombre"
-                  type="text"
-                  class="form-control note-name-input"
-                  placeholder="Nombre del cliente"
-                  [(ngModel)]="nombreClienteNota"
-                  maxlength="60"
-                />
+                <input id="notaNombre" type="text" class="form-control note-name-input" placeholder="Nombre del cliente"
+                  [(ngModel)]="nombreClienteNota" maxlength="60" />
               </div>
 
               <div class="note-options">
@@ -200,11 +194,13 @@
                   <span>CAJUELA:</span>
                   <div class="note-option-radios">
                     <div class="form-check checkbox-small">
-                      <input class="form-check-input checkbox-small-input" id="cajuelaSi" type="radio" name="cajuela" value="si" [(ngModel)]="cajuela"/>
+                      <input class="form-check-input checkbox-small-input" id="cajuelaSi" type="radio" name="cajuela"
+                        value="si" [(ngModel)]="cajuela" />
                       <label class="form-check-label checkbox-small-label mb-0" for="cajuelaSi">SÍ</label>
                     </div>
                     <div class="form-check checkbox-small">
-                      <input class="form-check-input checkbox-small-input" id="cajuelaNo" type="radio" name="cajuela" value="no" [(ngModel)]="cajuela"/>
+                      <input class="form-check-input checkbox-small-input" id="cajuelaNo" type="radio" name="cajuela"
+                        value="no" [(ngModel)]="cajuela" />
                       <label class="form-check-label checkbox-small-label mb-0" for="cajuelaNo">NO</label>
                     </div>
                   </div>
@@ -214,11 +210,13 @@
                   <span>AROMA:</span>
                   <div class="note-option-radios">
                     <div class="form-check checkbox-small">
-                      <input class="form-check-input checkbox-small-input" id="aromaSi" type="radio" name="aroma" value="si" [(ngModel)]="aroma"/>
+                      <input class="form-check-input checkbox-small-input" id="aromaSi" type="radio" name="aroma"
+                        value="si" [(ngModel)]="aroma" />
                       <label class="form-check-label checkbox-small-label mb-0" for="aromaSi">SÍ</label>
                     </div>
                     <div class="form-check checkbox-small">
-                      <input class="form-check-input checkbox-small-input" id="aromaNo" type="radio" name="aroma" value="no" [(ngModel)]="aroma"/>
+                      <input class="form-check-input checkbox-small-input" id="aromaNo" type="radio" name="aroma"
+                        value="no" [(ngModel)]="aroma" />
                       <label class="form-check-label checkbox-small-label mb-0" for="aromaNo">NO</label>
                     </div>
                   </div>
@@ -228,11 +226,13 @@
                   <span>BRILLO:</span>
                   <div class="note-option-radios">
                     <div class="form-check checkbox-small">
-                      <input class="form-check-input checkbox-small-input" id="brilloSi" type="radio" name="brillo" value="si" [(ngModel)]="brillo"/>
+                      <input class="form-check-input checkbox-small-input" id="brilloSi" type="radio" name="brillo"
+                        value="si" [(ngModel)]="brillo" />
                       <label class="form-check-label checkbox-small-label mb-0" for="brilloSi">SÍ</label>
                     </div>
                     <div class="form-check checkbox-small">
-                      <input class="form-check-input checkbox-small-input" id="brilloNo" type="radio" name="brillo" value="no" [(ngModel)]="brillo"/>
+                      <input class="form-check-input checkbox-small-input" id="brilloNo" type="radio" name="brillo"
+                        value="no" [(ngModel)]="brillo" />
                       <label class="form-check-label checkbox-small-label mb-0" for="brilloNo">NO</label>
                     </div>
                   </div>
@@ -242,11 +242,13 @@
                   <span>ASPIRADO:</span>
                   <div class="note-option-radios">
                     <div class="form-check checkbox-small">
-                      <input class="form-check-input checkbox-small-input" id="aspiradoSi" type="radio" name="aspirado" value="si" [(ngModel)]="aspirado"/>
+                      <input class="form-check-input checkbox-small-input" id="aspiradoSi" type="radio" name="aspirado"
+                        value="si" [(ngModel)]="aspirado" />
                       <label class="form-check-label checkbox-small-label mb-0" for="aspiradoSi">SÍ</label>
                     </div>
                     <div class="form-check checkbox-small">
-                      <input class="form-check-input checkbox-small-input" id="aspiradoNo" type="radio" name="aspirado" value="no" [(ngModel)]="aspirado"/>
+                      <input class="form-check-input checkbox-small-input" id="aspiradoNo" type="radio" name="aspirado"
+                        value="no" [(ngModel)]="aspirado" />
                       <label class="form-check-label checkbox-small-label mb-0" for="aspiradoNo">NO</label>
                     </div>
                   </div>
@@ -268,27 +270,24 @@
             </div>
           </div>
         </div>
-        
+
         <div class="card">
           <div class="card-header">Información Adicional</div>
           <div class="card-body">
             <div class="form-group">
               <label>Placa del Vehículo</label>
-              <input
-                class="form-control"
-                placeholder="Sin placa"
-                [(ngModel)]="placa"
-                [disabled]="true"
-                readonly
-              />
+              <input class="form-control" placeholder="Sin placa" [(ngModel)]="placa" [disabled]="true" readonly />
               <small class="text-muted" *ngIf="!placa || placa.trim()===''">Venta sin placa (no aplica lealtad)</small>
               <small class="text-muted" *ngIf="placa && placa.trim()!==''">Placa ingresada en el POS principal</small>
             </div>
 
             <div *ngIf="placa && placa.trim() !== '' && plateQuickInfo && ventasTotales > 0" class="alert alert-info">
-              <p class="mb-1">La placa <strong>{{ placa }}</strong> tiene <strong>{{ ventasTotales }}</strong> visitas registradas en total.</p>
-              <p class="mb-1">Ciclos de lealtad completados: <strong>{{ plateQuickInfo.cyclesCompleted || 0 }}</strong></p>
-              <p class="mb-0">Próxima visita será la <strong>{{ plateQuickInfo.nextInCycle }}</strong> del ciclo actual (cada 6 visitas se aplica descuento).</p>
+              <p class="mb-1">La placa <strong>{{ placa }}</strong> tiene <strong>{{ ventasTotales }}</strong> visitas
+                registradas en total.</p>
+              <p class="mb-1">Ciclos de lealtad completados: <strong>{{ plateQuickInfo.cyclesCompleted || 0 }}</strong>
+              </p>
+              <p class="mb-0">Próxima visita será la <strong>{{ plateQuickInfo.nextInCycle }}</strong> del ciclo actual
+                (cada 6 visitas se aplica descuento).</p>
             </div>
 
             <div *ngIf="descuentoAplicado > 0" class="alert alert-success mb-0">
@@ -312,14 +311,14 @@
                 <div>Subtotal</div>
                 <div>${{ calculateTotal() | number:'1.2-2' }}</div>
               </div>
-              
+
               <div *ngIf="descuentoAplicado > 0" class="d-flex justify-content-between mb-2">
                 <div>Descuento aplicado</div>
                 <div>-${{ descuentoAplicado | number:'1.2-2' }}</div>
               </div>
 
               <hr class="my-2" />
-              
+
               <div class="d-flex justify-content-between total">
                 <div>Total</div>
                 <div>${{ calcularTotalConDescuento() | number:'1.2-2' }}</div>
@@ -332,7 +331,8 @@
             <div class="card-body">
               <div class="payment-methods">
                 <div class="payment-method-option">
-                  <input class="form-check-input me-2" id="cash" name="paymentMethod" type="radio" (click)="setPaymentMethod('Efectivo')"/>
+                  <input class="form-check-input me-2" id="cash" name="paymentMethod" type="radio"
+                    (click)="setPaymentMethod('Efectivo')" />
                   <label class="form-check-label d-flex align-items-center" for="cash">
                     <i class="fas fa-money-bill-wave payment-icon-cash"></i> Efectivo
                   </label>
@@ -340,35 +340,36 @@
 
                 <div class="mb-3" *ngIf="paymentMethod === 'Efectivo'">
                   <label class="form-label" for="amountReceived">Cantidad recibida</label>
-                  <input class="form-control" id="amountReceived" type="number" [(ngModel)]="amountReceived" (input)="calculateChange()"/>
-                  
+                  <input class="form-control" id="amountReceived" type="number" [(ngModel)]="amountReceived"
+                    (input)="calculateChange()" />
+
                   <div *ngIf="change >= 0" class="alert alert-info mt-2 mb-0">
                     <strong>Cambio: ${{ change | number: '1.2-2' }}</strong>
                   </div>
                 </div>
 
                 <div class="payment-method-option">
-                  <input class="form-check-input me-2" id="debitCard" name="paymentMethod" type="radio" (click)="setPaymentMethod('tarjetaDebito')"/>
+                  <input class="form-check-input me-2" id="debitCard" name="paymentMethod" type="radio"
+                    (click)="setPaymentMethod('tarjetaDebito')" />
                   <label class="form-check-label d-flex align-items-center" for="debitCard">
                     <i class="fas fa-credit-card debit-card"></i> Tarjeta de Débito
                   </label>
                 </div>
 
                 <div class="payment-method-option">
-                  <input class="form-check-input me-2" id="creditCard" name="paymentMethod" type="radio" (click)="setPaymentMethod('tarjetaCredito')"/>
+                  <input class="form-check-input me-2" id="creditCard" name="paymentMethod" type="radio"
+                    (click)="setPaymentMethod('tarjetaCredito')" />
                   <label class="form-check-label d-flex align-items-center" for="creditCard">
                     <i class="fas fa-credit-card credit-card"></i> Tarjeta de Crédito
                   </label>
                 </div>
               </div>
-              
+
               <div class="btn-group-payment mt-3">
                 <button class="btn btn-custom-ds" (click)="discardSale()">
                   <i class="fas fa-times"></i> Descartar Venta
                 </button>
-                <button 
-                  class="btn btn-custom-green-fs" 
-                  (click)="finalizarVenta()" 
+                <button class="btn btn-custom-green-fs" (click)="finalizarVenta()"
                   [disabled]="!paymentMethod || saleInProgress">
                   <i class="fas fa-check"></i> Finalizar Venta
                 </button>
@@ -397,7 +398,7 @@
       </div>
       <div class="modal-footer">
         <!-- El atributo data-bs-dismiss asegura que el modal se cierre correctamente -->
-        <button type="button" class="btn btn-secondary"  data-bs-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
         <button type="button" class="btn btn-primary" (click)="printReceiptFromIframe()">Imprimir</button>
       </div>
     </div>
@@ -417,27 +418,21 @@
       </div>
       <div class="modal-body">
         <form #facturaForm="ngForm">
-          
+
           <div class="mb-3 position-relative">
             <label for="rfc" class="form-label">RFC</label>
-            <input
-              type="text"
-              id="rfc"
-              class="form-control"
-              [(ngModel)]="datosFiscales.rfc"
-              name="rfc"
-              (input)="onCustomerRfcInput($event)"
-              (blur)="onRfcBlur()"
-              required
-            />
-            <div class="list-group position-absolute w-100 shadow-sm" *ngIf="showRfcSuggestions" style="z-index: 1056; max-height: 200px; overflow:auto;">
-              <button type="button" class="list-group-item list-group-item-action"
-                *ngFor="let s of rfcSuggestions" (click)="selectCustomerSuggestion(s)">
+            <input type="text" id="rfc" class="form-control" [(ngModel)]="datosFiscales.rfc" name="rfc"
+              (input)="onCustomerRfcInput($event)" (blur)="onRfcBlur()" required />
+            <div class="list-group position-absolute w-100 shadow-sm" *ngIf="showRfcSuggestions"
+              style="z-index: 1056; max-height: 200px; overflow:auto;">
+              <button type="button" class="list-group-item list-group-item-action" *ngFor="let s of rfcSuggestions"
+                (click)="selectCustomerSuggestion(s)">
                 <div class="d-flex justify-content-between">
                   <span><strong>{{ s.rfc }}</strong></span>
                   <small class="text-muted">{{ s.codigoPostal || '-' }}</small>
                 </div>
-                <div class="small text-muted">{{ s.razonSocial || s.nombreCompleto || '-' }} • {{ s.email || '-' }}</div>
+                <div class="small text-muted">{{ s.razonSocial || s.nombreCompleto || '-' }} • {{ s.email || '-' }}
+                </div>
               </button>
               <div class="list-group-item text-muted" *ngIf="rfcSuggestions.length===0">Sin coincidencias</div>
             </div>
@@ -445,37 +440,19 @@
 
           <div class="mb-3">
             <label for="razonSocial" class="form-label">Nombre / Razón Social</label>
-            <input
-              type="text"
-              id="razonSocial"
-              class="form-control"
-              [(ngModel)]="datosFiscales.nombre"
-              name="razonSocial"
-              required
-            />
+            <input type="text" id="razonSocial" class="form-control" [(ngModel)]="datosFiscales.nombre"
+              name="razonSocial" required />
           </div>
 
           <div class="mb-3">
             <label for="cp" class="form-label">Código Postal</label>
-            <input
-              type="text"
-              id="cp"
-              class="form-control"
-              [(ngModel)]="datosFiscales.cp"
-              name="cp"
-              required
-            />
+            <input type="text" id="cp" class="form-control" [(ngModel)]="datosFiscales.cp" name="cp" required />
           </div>
 
           <div class="mb-3">
             <label for="regimenFiscal" class="form-label">Régimen Fiscal</label>
-            <select
-              id="regimenFiscal"
-              class="form-select"
-              [(ngModel)]="datosFiscales.regimenFiscal"
-              name="regimenFiscal"
-              required
-            >
+            <select id="regimenFiscal" class="form-select" [(ngModel)]="datosFiscales.regimenFiscal"
+              name="regimenFiscal" required>
               <option value="612">612 - Personas Físicas con Actividades Empresariales</option>
               <option value="605">605 - Sueldos y Salarios e Ingresos Asimilados a Salarios</option>
               <option value="626">626 - Régimen Simplificado de Confianza</option>
@@ -487,13 +464,7 @@
 
           <div class="mb-3">
             <label for="usoCfdi" class="form-label">Uso CFDI</label>
-            <select
-              id="usoCfdi"
-              class="form-select"
-              [(ngModel)]="datosFiscales.usoCfdi"
-              name="usoCfdi"
-              required
-            >
+            <select id="usoCfdi" class="form-select" [(ngModel)]="datosFiscales.usoCfdi" name="usoCfdi" required>
               <option value="G03">G03 - Gastos en general</option>
               <option value="P01">P01 - Por definir</option>
             </select>
@@ -501,19 +472,9 @@
 
           <div class="mb-3">
             <label for="email" class="form-label">Correo electrónico (opcional)</label>
-            <input
-              type="email"
-              id="email"
-              class="form-control"
-              [(ngModel)]="datosFiscales.email"
-              name="email"
-              pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-              #emailInput="ngModel"
-            />
-            <div
-              *ngIf="emailInput.invalid && emailInput.touched"
-              class="text-danger"
-            >
+            <input type="email" id="email" class="form-control" [(ngModel)]="datosFiscales.email" name="email"
+              pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" #emailInput="ngModel" />
+            <div *ngIf="emailInput.invalid && emailInput.touched" class="text-danger">
               Ingresa un correo válido si deseas recibir la factura por email.
             </div>
           </div>
@@ -522,13 +483,8 @@
           <div class="mb-3">
             <div class="save-customer-option">
               <div class="form-check">
-                <input 
-                  class="form-check-input save-customer-checkbox" 
-                  type="checkbox" 
-                  id="guardarCliente" 
-                  [(ngModel)]="guardarCliente"
-                  name="guardarCliente"
-                />
+                <input class="form-check-input save-customer-checkbox" type="checkbox" id="guardarCliente"
+                  [(ngModel)]="guardarCliente" name="guardarCliente" />
                 <label class="form-check-label save-customer-label" for="guardarCliente">
                   <i class="fas fa-save me-2"></i>
                   <strong>Guardar datos del cliente para futuras facturaciones</strong>
@@ -541,20 +497,11 @@
           </div>
 
           <div class="text-end">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              style="margin-right: 40%;"
-              data-bs-dismiss="modal"
-            >
+            <button type="button" class="btn btn-secondary" style="margin-right: 40%;" data-bs-dismiss="modal">
               Cancelar
             </button>
-            <button
-              type="button"
-              class="btn btn-success"
-              (click)="timbrarFactura(); hidePopup()"
-              [disabled]="!facturaForm.valid || emailInput.invalid"
-            >
+            <button type="button" class="btn btn-success" (click)="timbrarFactura(); hidePopup()"
+              [disabled]="!facturaForm.valid || emailInput.invalid">
               <i class="fas fa-file-invoice"></i> Timbrar y Descargar
             </button>
           </div>
@@ -565,18 +512,15 @@
 </div>
 
 <!-- Popup de facturación -->
+<!-- Popup de facturación 
 <div class="popup" *ngIf="showSaleCompletedPopup">
-  <div class="popup-content">
-    <i class="fas fa-file-invoice"></i>
-    <span>¿Deseas facturar esta venta?</span>
-    <div class="popup-buttons">
-      <button class="btn btn-success me-2" (click)="abrirModalFactura()">Sí, facturar</button>
-      <button class="btn btn-secondary" (click)="hidePopup()">No, gracias</button>
-    </div>
-  </div>
-</div>
+  ...
+</div> -->
 
 <!-- Scripts de Bootstrap -->
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+  integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
+  integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+  integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>

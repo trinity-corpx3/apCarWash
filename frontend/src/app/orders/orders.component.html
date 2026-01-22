@@ -1,642 +1,568 @@
- 
-  <div class="app-container">
-    <!-- Sidebar -->
-    <app-sidebar></app-sidebar>
+<div class="app-container">
+  <!-- Sidebar -->
+  <app-sidebar></app-sidebar>
 
-    <!-- Contenido principal -->
-    <main class="main-content">
-        <!-- Encabezado -->
-        <div class="content-header">
-          <div class="header-title">
-            <h2>Órdenes de Venta</h2>
-            <h5>{{ sucursalName }}</h5>
-          </div>
-          <div class="header-actions">
-            <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#customTicketModal">
-              <i class="fas fa-receipt"></i> Corte Personalizado
-            </button>
-            <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#globalInvoiceModal" (click)="openGlobalInvoiceModal()">
+  <!-- Contenido principal -->
+  <main class="main-content">
+    <!-- Encabezado -->
+    <div class="content-header">
+      <div class="header-title">
+        <h2>Órdenes de Venta</h2>
+        <h5>{{ sucursalName }}</h5>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#customTicketModal">
+          <i class="fas fa-receipt"></i> Corte Personalizado
+        </button>
+        <!-- <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#globalInvoiceModal" (click)="openGlobalInvoiceModal()">
               <i class="fas fa-file-invoice"></i> Factura Global
-            </button>
-          </div>
+            </button> -->
+      </div>
+    </div>
+
+    <!-- Resumen de ventas -->
+    <div class="sales-summary" [class.historical-mode]="isHistoricalView">
+      <div class="summary-card" *ngIf="!isHistoricalView">
+        <span>Hoy</span>
+        <h3>${{ todayNetAmount | number:'1.2-2' }}</h3>
+        <span>{{ todaySalesCount }} ventas</span>
+        <small class="text-muted d-block">Subtotal: ${{ todaySalesAmount | number:'1.2-2' }} · Descuentos 6ª: -${{
+          todayDiscountAmount | number:'1.2-2' }} ({{ todayDiscountCount }})</small>
+        <div class="actions">
+          <button (click)="exportToCSV('today')" class="btn btn-sm btn-outline-success">Exportar CSV</button>
+          <button (click)="generateTicket('today')" class="btn btn-sm btn-outline-primary">Generar Ticket</button>
         </div>
+      </div>
 
-        <!-- Resumen de ventas -->
-        <div class="sales-summary" [class.historical-mode]="isHistoricalView">
-          <div class="summary-card" *ngIf="!isHistoricalView">
-            <span>Hoy</span>
-            <h3>${{ todayNetAmount | number:'1.2-2' }}</h3>
-            <span>{{ todaySalesCount }} ventas</span>
-            <small class="text-muted d-block">Subtotal: ${{ todaySalesAmount | number:'1.2-2' }} · Descuentos 6ª: -${{ todayDiscountAmount | number:'1.2-2' }} ({{ todayDiscountCount }})</small>
-            <div class="actions">
-              <button (click)="exportToCSV('today')" class="btn btn-sm btn-outline-success">Exportar CSV</button>
-              <button (click)="generateTicket('today')" class="btn btn-sm btn-outline-primary">Generar Ticket</button>
-            </div>
-          </div>
-
-          <div class="summary-card" *ngIf="!isHistoricalView">
-            <span>Ayer</span>
-            <h3>${{ yesterdayNetAmount | number:'1.2-2' }}</h3>
-            <span>{{ yesterdaySalesCount }} ventas</span>
-            <small class="text-muted d-block">Subtotal: ${{ yesterdaySalesAmount | number:'1.2-2' }} · Descuentos 6ª: -${{ yesterdayDiscountAmount | number:'1.2-2' }} ({{ yesterdayDiscountCount }})</small>
-            <div class="actions">
-              <button (click)="exportToCSV('yesterday')" class="btn btn-sm btn-outline-success">Exportar CSV</button>
-              <button (click)="generateTicket('yesterday')" class="btn btn-sm btn-outline-primary">Generar Ticket</button>
-            </div>
-          </div>
-
-          <div class="summary-card" *ngIf="!isHistoricalView">
-            <span>Esta Semana</span>
-            <h3>${{ weekNetAmount | number:'1.2-2' }}</h3>
-            <span>{{ weekSalesCount }} ventas</span>
-            <small class="text-muted d-block">Subtotal: ${{ weekSalesAmount | number:'1.2-2' }} · Descuentos 6ª: -${{ weekDiscountAmount | number:'1.2-2' }} ({{ weekDiscountCount }})</small>
-            <div class="actions">
-              <button (click)="exportToCSV('week')" class="btn btn-sm btn-outline-success">Exportar CSV</button>
-              <button (click)="generateTicket('week')" class="btn btn-sm btn-outline-primary">Generar Ticket</button>
-            </div>
-          </div>
-
-          <div class="summary-card">
-            <span>{{ isHistoricalView ? getSelectedMonthName() + ' ' + selectedHistoricalYear : 'Este Mes' }}</span>
-            <h3>${{ monthNetAmount | number:'1.2-2' }}</h3>
-            <span>{{ monthSalesCount }} ventas</span>
-            <small class="text-muted d-block">Subtotal: ${{ monthSalesAmount | number:'1.2-2' }} · Descuentos 6ª: -${{ monthDiscountAmount | number:'1.2-2' }} ({{ monthDiscountCount }})</small>
-            <div class="actions">
-              <button (click)="exportToCSV(isHistoricalView ? 'historical' : 'month')" class="btn btn-sm btn-outline-success">Exportar CSV</button>
-              <button (click)="generateTicket(isHistoricalView ? 'historical' : 'month')" class="btn btn-sm btn-outline-primary">Generar Ticket</button>
-            </div>
-          </div>
-
-          <!-- Tarjeta adicional para vista histórica -->
-          <div class="summary-card" *ngIf="isHistoricalView">
-            <span>Días con Ventas</span>
-            <h3>{{ diasConVentas }}</h3>
-            <span>de {{ getDaysInSelectedMonth() }} días</span>
-            <div class="actions">
-              <button class="btn btn-sm btn-outline-info" disabled>
-                <i class="fas fa-calendar-alt"></i> Histórico
-              </button>
-            </div>
-          </div>
+      <div class="summary-card" *ngIf="!isHistoricalView">
+        <span>Ayer</span>
+        <h3>${{ yesterdayNetAmount | number:'1.2-2' }}</h3>
+        <span>{{ yesterdaySalesCount }} ventas</span>
+        <small class="text-muted d-block">Subtotal: ${{ yesterdaySalesAmount | number:'1.2-2' }} · Descuentos 6ª: -${{
+          yesterdayDiscountAmount | number:'1.2-2' }} ({{ yesterdayDiscountCount }})</small>
+        <div class="actions">
+          <button (click)="exportToCSV('yesterday')" class="btn btn-sm btn-outline-success">Exportar CSV</button>
+          <button (click)="generateTicket('yesterday')" class="btn btn-sm btn-outline-primary">Generar Ticket</button>
         </div>
+      </div>
 
-        <!-- Información de Timbres -->
-        <div class="timbres-info mb-1">
-          <div class="alert alert-light border text-center py-1 mb-0">
-            <div *ngIf="!editandoTimbres">
-              <small>🏷️ Timbres: {{ timbresUtilizados }} utilizados de {{ timbresDisponibles }} disponibles</small>
-              <button class="btn btn-xs btn-outline-primary ms-1" style="font-size: 10px; padding: 2px 6px;" (click)="editarTimbres()">
-                ✏️ Editar
-              </button>
-            </div>
-            <div *ngIf="editandoTimbres">
-              <small>🏷️ Timbres: {{ timbresUtilizados }} utilizados de </small>
-              <input type="number" 
-                     [(ngModel)]="timbresDisponibles" 
-                     class="form-control d-inline-block mx-1" 
-                     style="width: 60px; height: 20px; font-size: 12px; padding: 1px 4px;"
-                     min="0">
-              <small> disponibles</small>
-              <button class="btn btn-xs btn-success ms-1" style="font-size: 10px; padding: 2px 6px;" (click)="guardarTimbres()">
-                ✅
-              </button>
-              <button class="btn btn-xs btn-secondary ms-1" style="font-size: 10px; padding: 2px 6px;" (click)="cancelarEdicionTimbres()">
-                ❌
-              </button>
-            </div>
-            <div>
-              <small class="text-muted" style="font-size: 11px;">
-                <i class="fas fa-info-circle me-1"></i>
-                {{ timbresDisponibles - timbresUtilizados }} timbres restantes
-              </small>
-            </div>
-          </div>
+      <div class="summary-card" *ngIf="!isHistoricalView">
+        <span>Esta Semana</span>
+        <h3>${{ weekNetAmount | number:'1.2-2' }}</h3>
+        <span>{{ weekSalesCount }} ventas</span>
+        <small class="text-muted d-block">Subtotal: ${{ weekSalesAmount | number:'1.2-2' }} · Descuentos 6ª: -${{
+          weekDiscountAmount | number:'1.2-2' }} ({{ weekDiscountCount }})</small>
+        <div class="actions">
+          <button (click)="exportToCSV('week')" class="btn btn-sm btn-outline-success">Exportar CSV</button>
+          <button (click)="generateTicket('week')" class="btn btn-sm btn-outline-primary">Generar Ticket</button>
         </div>
+      </div>
 
-        <!-- Banner indicador cuando se está viendo histórico -->
-        <div class="alert alert-info d-flex align-items-center mb-3" *ngIf="isHistoricalView">
-          <i class="fas fa-history me-2"></i>
-          <div class="flex-grow-1">
-            <strong>Vista Histórica:</strong> 
-            Mostrando datos de {{ getSelectedMonthName() }} {{ selectedHistoricalYear }}
-          </div>
-          <button class="btn btn-sm btn-outline-primary" (click)="volverMesActual()">
-            <i class="fas fa-calendar-check"></i> Volver al Mes Actual
+      <div class="summary-card">
+        <span>{{ isHistoricalView ? getSelectedMonthName() + ' ' + selectedHistoricalYear : 'Este Mes' }}</span>
+        <h3>${{ monthNetAmount | number:'1.2-2' }}</h3>
+        <span>{{ monthSalesCount }} ventas</span>
+        <small class="text-muted d-block">Subtotal: ${{ monthSalesAmount | number:'1.2-2' }} · Descuentos 6ª: -${{
+          monthDiscountAmount | number:'1.2-2' }} ({{ monthDiscountCount }})</small>
+        <div class="actions">
+          <button (click)="exportToCSV(isHistoricalView ? 'historical' : 'month')"
+            class="btn btn-sm btn-outline-success">Exportar CSV</button>
+          <button (click)="generateTicket(isHistoricalView ? 'historical' : 'month')"
+            class="btn btn-sm btn-outline-primary">Generar Ticket</button>
+        </div>
+      </div>
+
+      <!-- Tarjeta adicional para vista histórica -->
+      <div class="summary-card" *ngIf="isHistoricalView">
+        <span>Días con Ventas</span>
+        <h3>{{ diasConVentas }}</h3>
+        <span>de {{ getDaysInSelectedMonth() }} días</span>
+        <div class="actions">
+          <button class="btn btn-sm btn-outline-info" disabled>
+            <i class="fas fa-calendar-alt"></i> Histórico
           </button>
         </div>
+      </div>
+    </div>
 
-        <!-- Selector de mes histórico -->
-        <div class="historical-selector mb-3">
-          <div class="historical-selector-content">
-            <div class="historical-selector-left">
-              <div class="d-flex gap-2 align-items-center flex-wrap">
-                <label class="form-label mb-0">Ver histórico:</label>
-                <select [(ngModel)]="selectedHistoricalMonth" class="form-select form-select-sm">
-                  <option value="">Seleccionar mes</option>
-                  <option *ngFor="let mes of meses" [value]="mes.value">{{mes.nombre}}</option>
-                </select>
-                <select [(ngModel)]="selectedHistoricalYear" class="form-select form-select-sm">
-                  <option value="">Año</option>
-                  <option *ngFor="let year of availableYears" [value]="year">{{year}}</option>
-                </select>
-                <button class="btn btn-primary btn-sm" (click)="cargarHistorico()" 
-                        [disabled]="!selectedHistoricalMonth || !selectedHistoricalYear || loading">
-                  <i class="fas fa-search"></i> Ver
-                </button>
-                <button class="btn btn-outline-secondary btn-sm" (click)="volverMesActual()" 
-                        *ngIf="isHistoricalView">
-                  <i class="fas fa-calendar-check"></i> Mes Actual
-                </button>
-              </div>
-            </div>
-            <div class="historical-selector-right">
-              <small class="text-muted" *ngIf="isHistoricalView">
-                <i class="fas fa-history"></i> 
-                {{ ordenes.length }} registros | {{ diasConVentas }} días con ventas
-              </small>
-            </div>
-          </div>
-        </div>
+    <!-- Información de Timbres (Oculto por solicitud) -->
+    <!-- <div class="timbres-info mb-1">
+          ...
+        </div> -->
 
-        <!-- Tabla de órdenes -->
-        <div class="table-controls">
-          <div class="records-control">
-            <label>Mostrar:</label>
-            <select [(ngModel)]="recordsPerPage" (change)="onRecordsPerPageChange()">
-              <option value="10">10 registros</option>
-              <option value="25">25 registros</option>
-              <option value="50">50 registros</option>
-              <option value="100">100 registros</option>
+    <!-- Banner indicador cuando se está viendo histórico -->
+    <div class="alert alert-info d-flex align-items-center mb-3" *ngIf="isHistoricalView">
+      <i class="fas fa-history me-2"></i>
+      <div class="flex-grow-1">
+        <strong>Vista Histórica:</strong>
+        Mostrando datos de {{ getSelectedMonthName() }} {{ selectedHistoricalYear }}
+      </div>
+      <button class="btn btn-sm btn-outline-primary" (click)="volverMesActual()">
+        <i class="fas fa-calendar-check"></i> Volver al Mes Actual
+      </button>
+    </div>
+
+    <!-- Selector de mes histórico -->
+    <div class="historical-selector mb-3">
+      <div class="historical-selector-content">
+        <div class="historical-selector-left">
+          <div class="d-flex gap-2 align-items-center flex-wrap">
+            <label class="form-label mb-0">Ver histórico:</label>
+            <select [(ngModel)]="selectedHistoricalMonth" class="form-select form-select-sm">
+              <option value="">Seleccionar mes</option>
+              <option *ngFor="let mes of meses" [value]="mes.value">{{mes.nombre}}</option>
             </select>
-          </div>
-          <div class="pagination">
-            <button [disabled]="currentPage === 1" (click)="previousPage()">
-              <i class="fas fa-chevron-left"></i>
+            <select [(ngModel)]="selectedHistoricalYear" class="form-select form-select-sm">
+              <option value="">Año</option>
+              <option *ngFor="let year of availableYears" [value]="year">{{year}}</option>
+            </select>
+            <button class="btn btn-primary btn-sm" (click)="cargarHistorico()"
+              [disabled]="!selectedHistoricalMonth || !selectedHistoricalYear || loading">
+              <i class="fas fa-search"></i> Ver
             </button>
-            <span>{{ currentPage }} / {{ totalPages }}</span>
-            <button [disabled]="currentPage === totalPages" (click)="nextPage()">
-              <i class="fas fa-chevron-right"></i>
+            <button class="btn btn-outline-secondary btn-sm" (click)="volverMesActual()" *ngIf="isHistoricalView">
+              <i class="fas fa-calendar-check"></i> Mes Actual
             </button>
           </div>
         </div>
+        <div class="historical-selector-right">
+          <small class="text-muted" *ngIf="isHistoricalView">
+            <i class="fas fa-history"></i>
+            {{ ordenes.length }} registros | {{ diasConVentas }} días con ventas
+          </small>
+        </div>
+      </div>
+    </div>
 
-        <div class="table-container">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Recibo</th>
-                <th>Total</th>
-                <th>Fecha</th>
-                <th>Método de Pago</th>
-                <th>Recibido</th>
-                <th>Cambio</th>
-                <th>Sucursal</th>
-                <th>Placa</th>
-                <th>Cajero</th>
-                <th>Estado</th>
-                <th>Facturada</th>
-                <th>Items</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngIf="loading">
-                <td colspan="13" class="text-center">
-                  <div class="spinner-border spinner-border-sm"></div>
-                </td>
-              </tr>
-              <tr *ngIf="!loading && paginatedOrders.length === 0">
-                <td colspan="13" class="text-center">
-                  <i class="fas fa-inbox text-muted"></i>
-                  <p class="mb-0">No hay órdenes disponibles</p>
-                </td>
-              </tr>
-              <ng-container *ngFor="let orden of paginatedOrders">
-                <tr>
-                  <td>{{ orden.id }}</td>
-                  <td>
-                    {{ orden.numeroRecibo }}
-                    <span *ngIf="orden.loyaltyApplied" class="badge bg-info ms-1">6ª</span>
-                  </td>
-                  <td>{{ orden.total | currency:'MXN' }}</td>
-                  <td>{{ orden.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
-                  <td>
-                    <span class="badge" [ngClass]="{'bg-success': orden.metodoPago === 'Efectivo', 'bg-primary': orden.metodoPago !== 'Efectivo'}">
-                      {{ orden.metodoPago }}
-                    </span>
-                  </td>
-                  <td>{{ orden.cantidadRecibida | currency:'MXN' }}</td>
-                  <td>{{ orden.cambio | currency:'MXN' }}</td>
-                  <td>{{ orden.sucursal?.nombre }}</td>
-                  <td>{{ orden.placa || '-' }}</td>
-                  <td>{{ orden.cajero }}</td>
-                  <td>
-                    <span class="badge" [ngClass]="{'bg-success': orden.estado === 'Completada', 'bg-warning': orden.estado !== 'Completada'}">
-                      {{ orden.estado }}
-                    </span>
-                  </td>
-                  <td>
-                    <span class="badge" [ngClass]="{'bg-success': orden.facturada, 'bg-danger': !orden.facturada}">
-                      {{ orden.facturada ? 'Sí' : 'No' }}
-                    </span>
-                  </td>
-                  <td>
-                    <button class="btn btn-link" (click)="toggleItemDetails(orden)">
-                      {{ orden.productos?.length }} items
-                      <i class="fas" [ngClass]="{'fa-chevron-down': !orden.showDetails, 'fa-chevron-up': orden.showDetails}"></i>
-                    </button>
-                  </td>
-                  <td class="actions">
-                    <button class="btn btn-sm btn-outline-primary me-2" (click)="generateTicket(orden)">
-                      Ver Ticket
-                    </button>
-                    <button class="btn btn-sm btn-outline-success" [disabled]="orden.facturada" (click)="facturarOrden(orden)">
+    <!-- Tabla de órdenes -->
+    <div class="table-controls">
+      <div class="records-control">
+        <label>Mostrar:</label>
+        <select [(ngModel)]="recordsPerPage" (change)="onRecordsPerPageChange()">
+          <option value="10">10 registros</option>
+          <option value="25">25 registros</option>
+          <option value="50">50 registros</option>
+          <option value="100">100 registros</option>
+        </select>
+      </div>
+      <div class="pagination">
+        <button [disabled]="currentPage === 1" (click)="previousPage()">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <span>{{ currentPage }} / {{ totalPages }}</span>
+        <button [disabled]="currentPage === totalPages" (click)="nextPage()">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Recibo</th>
+            <th>Total</th>
+            <th>Fecha</th>
+            <th>Método de Pago</th>
+            <th>Recibido</th>
+            <th>Cambio</th>
+            <th>Sucursal</th>
+            <th>Placa</th>
+            <th>Cajero</th>
+            <th>Estado</th>
+            <th>Facturada</th>
+            <th>Items</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="loading">
+            <td colspan="13" class="text-center">
+              <div class="spinner-border spinner-border-sm"></div>
+            </td>
+          </tr>
+          <tr *ngIf="!loading && paginatedOrders.length === 0">
+            <td colspan="13" class="text-center">
+              <i class="fas fa-inbox text-muted"></i>
+              <p class="mb-0">No hay órdenes disponibles</p>
+            </td>
+          </tr>
+          <ng-container *ngFor="let orden of paginatedOrders">
+            <tr>
+              <td>{{ orden.id }}</td>
+              <td>
+                {{ orden.numeroRecibo }}
+                <span *ngIf="orden.loyaltyApplied" class="badge bg-info ms-1">6ª</span>
+              </td>
+              <td>{{ orden.total | currency:'MXN' }}</td>
+              <td>{{ orden.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td>
+                <span class="badge"
+                  [ngClass]="{'bg-success': orden.metodoPago === 'Efectivo', 'bg-primary': orden.metodoPago !== 'Efectivo'}">
+                  {{ orden.metodoPago }}
+                </span>
+              </td>
+              <td>{{ orden.cantidadRecibida | currency:'MXN' }}</td>
+              <td>{{ orden.cambio | currency:'MXN' }}</td>
+              <td>{{ orden.sucursal?.nombre }}</td>
+              <td>{{ orden.placa || '-' }}</td>
+              <td>{{ orden.cajero }}</td>
+              <td>
+                <span class="badge"
+                  [ngClass]="{'bg-success': orden.estado === 'Completada', 'bg-warning': orden.estado !== 'Completada'}">
+                  {{ orden.estado }}
+                </span>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="{'bg-success': orden.facturada, 'bg-danger': !orden.facturada}">
+                  {{ orden.facturada ? 'Sí' : 'No' }}
+                </span>
+              </td>
+              <td>
+                <button class="btn btn-link" (click)="toggleItemDetails(orden)">
+                  {{ orden.productos?.length }} items
+                  <i class="fas"
+                    [ngClass]="{'fa-chevron-down': !orden.showDetails, 'fa-chevron-up': orden.showDetails}"></i>
+                </button>
+              </td>
+              <td class="actions">
+                <button class="btn btn-sm btn-outline-primary me-2" (click)="generateTicket(orden)">
+                  Ver Ticket
+                </button>
+                <!-- <button class="btn btn-sm btn-outline-success" [disabled]="orden.facturada" (click)="facturarOrden(orden)">
                       Facturar
-                    </button>
-                  </td>
-                </tr>
-                <tr *ngIf="orden.showDetails">
-                  <td colspan="13">
-                    <div class="order-details">
-                      <h6>Detalles de la Orden #{{ orden.id }}</h6>
-                      <table class="table table-sm">
-                        <thead>
-                          <tr>
-                            <th>Producto</th>
-                            <th>Cantidad</th>
-                            <th>Precio Unitario</th>
-                            <th>Total</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr *ngFor="let producto of orden.productos">
-                            <td>{{ producto.nombreProducto }}</td>
-                            <td>{{ producto.cantidad }}</td>
-                            <td>{{ producto.precioProducto | currency:'MXN' }}</td>
-                            <td>{{ producto.cantidad * producto.precioProducto | currency:'MXN' }}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </td>
-                </tr>
-              </ng-container>
-            </tbody>
-          </table>
-        </div>
+                    </button> -->
+              </td>
+            </tr>
+            <tr *ngIf="orden.showDetails">
+              <td colspan="13">
+                <div class="order-details">
+                  <h6>Detalles de la Orden #{{ orden.id }}</h6>
+                  <table class="table table-sm">
+                    <thead>
+                      <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
+                        <th>Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let producto of orden.productos">
+                        <td>{{ producto.nombreProducto }}</td>
+                        <td>{{ producto.cantidad }}</td>
+                        <td>{{ producto.precioProducto | currency:'MXN' }}</td>
+                        <td>{{ producto.cantidad * producto.precioProducto | currency:'MXN' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+      </table>
+    </div>
 
 
-      </main>
-  </div>
+  </main>
+</div>
 
-  <!-- Modales -->
-  <div class="modal fade" id="customTicketModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Corte de Caja Personalizado</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<!-- Modales -->
+<div class="modal fade" id="customTicketModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Corte de Caja Personalizado</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3 position-relative">
+          <label class="form-label">Fecha de Inicio</label>
+          <input type="date" class="form-control" [(ngModel)]="customStartDate">
         </div>
-        <div class="modal-body">
-          <div class="mb-3 position-relative">
-            <label class="form-label">Fecha de Inicio</label>
-            <input type="date" class="form-control" [(ngModel)]="customStartDate">
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Fecha de Fin</label>
-            <input type="date" class="form-control" [(ngModel)]="customEndDate">
-          </div>
+        <div class="mb-3">
+          <label class="form-label">Fecha de Fin</label>
+          <input type="date" class="form-control" [(ngModel)]="customEndDate">
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-          <button
-            type="button"
-            class="btn btn-primary"
-            data-bs-dismiss="modal"
-            (click)="generateCustomTicket()"
-          >
-            Generar Corte
-          </button>
-        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" (click)="generateCustomTicket()">
+          Generar Corte
+        </button>
       </div>
     </div>
   </div>
+</div>
 
-  <div class="modal fade" id="receiptModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Recibo de Compra</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <iframe id="receiptIframe" style="width: 100%; height: 500px;" frameborder="0"></iframe>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-          <button type="button" class="btn btn-primary" (click)="printReceiptFromIframe()">Imprimir</button>
-        </div>
+<div class="modal fade" id="receiptModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Recibo de Compra</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <iframe id="receiptIframe" style="width: 100%; height: 500px;" frameborder="0"></iframe>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-primary" (click)="printReceiptFromIframe()">Imprimir</button>
       </div>
     </div>
   </div>
+</div>
 
-  <div class="modal fade" id="ticketModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Corte de Caja</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <iframe id="ticketIframe" style="width: 100%; height: 500px;" frameborder="0"></iframe>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-          <button type="button" class="btn btn-primary" onclick="window.frames['ticketIframe'].contentWindow.print()">Imprimir</button>
-        </div>
+<div class="modal fade" id="ticketModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Corte de Caja</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <iframe id="ticketIframe" style="width: 100%; height: 500px;" frameborder="0"></iframe>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-primary"
+          onclick="window.frames['ticketIframe'].contentWindow.print()">Imprimir</button>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- Modal de Facturación -->
-  <div class="modal fade" id="facturaModal" tabindex="-1" aria-labelledby="facturaModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="facturaModalLabel">Facturar Orden {{ selectedOrder.numeroRecibo }}</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-        </div>
-        <div class="modal-body">
-          <form #facturaForm="ngForm">
-            
+<!-- Modal de Facturación -->
+<div class="modal fade" id="facturaModal" tabindex="-1" aria-labelledby="facturaModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="facturaModalLabel">Facturar Orden {{ selectedOrder.numeroRecibo }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <form #facturaForm="ngForm">
+
           <div class="mb-3">
             <label for="rfc" class="form-label">RFC</label>
-            <input
-              type="text"
-              id="rfc"
-              class="form-control"
-              [(ngModel)]="datosFiscales.rfc"
-              name="rfc"
-              (input)="onCustomerRfcInput($event)"
-              (blur)="onRfcBlur()"
-              required
-            />
-            <div class="list-group position-absolute w-100 shadow-sm" *ngIf="showRfcSuggestions" style="z-index: 1056; max-height: 200px; overflow:auto;">
-              <button type="button" class="list-group-item list-group-item-action"
-                *ngFor="let s of rfcSuggestions" (click)="selectCustomerSuggestion(s)">
+            <input type="text" id="rfc" class="form-control" [(ngModel)]="datosFiscales.rfc" name="rfc"
+              (input)="onCustomerRfcInput($event)" (blur)="onRfcBlur()" required />
+            <div class="list-group position-absolute w-100 shadow-sm" *ngIf="showRfcSuggestions"
+              style="z-index: 1056; max-height: 200px; overflow:auto;">
+              <button type="button" class="list-group-item list-group-item-action" *ngFor="let s of rfcSuggestions"
+                (click)="selectCustomerSuggestion(s)">
                 <div class="d-flex justify-content-between">
                   <span><strong>{{ s.rfc }}</strong></span>
                   <small class="text-muted">{{ s.codigoPostal || '-' }}</small>
                 </div>
-                <div class="small text-muted">{{ s.razonSocial || s.nombreCompleto || '-' }} • {{ s.emailCfdi || s.email || '-' }}</div>
+                <div class="small text-muted">{{ s.razonSocial || s.nombreCompleto || '-' }} • {{ s.emailCfdi || s.email
+                  || '-' }}</div>
               </button>
               <div class="list-group-item text-muted" *ngIf="rfcSuggestions.length===0">Sin coincidencias</div>
             </div>
           </div>
 
-            <div class="mb-3">
-              <label for="razonSocial" class="form-label">Nombre / Razón Social</label>
-            <input
-                type="text"
-                id="razonSocial"
-                class="form-control"
-                [(ngModel)]="datosFiscales.nombre"
-                name="razonSocial"
-                required
-              />
-            </div>
+          <div class="mb-3">
+            <label for="razonSocial" class="form-label">Nombre / Razón Social</label>
+            <input type="text" id="razonSocial" class="form-control" [(ngModel)]="datosFiscales.nombre"
+              name="razonSocial" required />
+          </div>
 
-            <div class="mb-3">
-              <label for="cp" class="form-label">Código Postal</label>
-            <input
-                type="text"
-                id="cp"
-                class="form-control"
-                [(ngModel)]="datosFiscales.cp"
-                name="cp"
-                required
-              />
-            </div>
+          <div class="mb-3">
+            <label for="cp" class="form-label">Código Postal</label>
+            <input type="text" id="cp" class="form-control" [(ngModel)]="datosFiscales.cp" name="cp" required />
+          </div>
 
-            <div class="mb-3">
-              <label for="regimenFiscal" class="form-label">Régimen Fiscal</label>
-              <select
-                id="regimenFiscal"
-                class="form-select"
-                [(ngModel)]="datosFiscales.regimenFiscal"
-                name="regimenFiscal"
-                required
-              >
-                <option value="612">612 - Personas Físicas con Actividades Empresariales</option>
-                <option value="605">605 - Sueldos y Salarios e Ingresos Asimilados a Salarios</option>
-                <option value="626">626 - Régimen Simplificado de Confianza</option>
-                <option value="601">601 - General de Ley Personas Morales</option>
-                <option value="625">625 - Ingresos a través de Plataformas Tecnológicas</option>
-                <option value="603">603 - Persona Moral con Fines no Lucrativos</option>
-              </select>
-            </div>
+          <div class="mb-3">
+            <label for="regimenFiscal" class="form-label">Régimen Fiscal</label>
+            <select id="regimenFiscal" class="form-select" [(ngModel)]="datosFiscales.regimenFiscal"
+              name="regimenFiscal" required>
+              <option value="612">612 - Personas Físicas con Actividades Empresariales</option>
+              <option value="605">605 - Sueldos y Salarios e Ingresos Asimilados a Salarios</option>
+              <option value="626">626 - Régimen Simplificado de Confianza</option>
+              <option value="601">601 - General de Ley Personas Morales</option>
+              <option value="625">625 - Ingresos a través de Plataformas Tecnológicas</option>
+              <option value="603">603 - Persona Moral con Fines no Lucrativos</option>
+            </select>
+          </div>
 
-            <div class="mb-3">
-              <label for="usoCfdi" class="form-label">Uso CFDI</label>
-              <select
-                id="usoCfdi"
-                class="form-select"
-                [(ngModel)]="datosFiscales.usoCfdi"
-                name="usoCfdi"
-                required
-              >
-                <option value="G03">G03 - Gastos en general</option>
-                <option value="P01">P01 - Por definir</option>
-              </select>
-            </div>
+          <div class="mb-3">
+            <label for="usoCfdi" class="form-label">Uso CFDI</label>
+            <select id="usoCfdi" class="form-select" [(ngModel)]="datosFiscales.usoCfdi" name="usoCfdi" required>
+              <option value="G03">G03 - Gastos en general</option>
+              <option value="P01">P01 - Por definir</option>
+            </select>
+          </div>
 
-            <div class="mb-3">
-              <label for="email" class="form-label">Correo electrónico (opcional)</label>
-            <input
-                type="email"
-                id="email"
-                class="form-control"
-                [(ngModel)]="datosFiscales.email"
-                name="email"
-                pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-                #emailInput="ngModel"
-              />
-              <div
-                *ngIf="emailInput.invalid && emailInput.touched"
-                class="text-danger"
-              >
-                Ingresa un correo válido si deseas recibir la factura por email.
-              </div>
+          <div class="mb-3">
+            <label for="email" class="form-label">Correo electrónico (opcional)</label>
+            <input type="email" id="email" class="form-control" [(ngModel)]="datosFiscales.email" name="email"
+              pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" #emailInput="ngModel" />
+            <div *ngIf="emailInput.invalid && emailInput.touched" class="text-danger">
+              Ingresa un correo válido si deseas recibir la factura por email.
             </div>
+          </div>
 
-            <div class="text-end">
-              <button
-                type="button"
-                class="btn btn-secondary"
-                style="margin-right: 40%;"
-                data-bs-dismiss="modal"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                class="btn btn-success"
-                (click)="timbrarFactura()"
-                [disabled]="!facturaForm.valid || emailInput.invalid"
-              >
-                <i class="fas fa-file-invoice"></i> Timbrar y Descargar
-              </button>
+          <div class="text-end">
+            <button type="button" class="btn btn-secondary" style="margin-right: 40%;" data-bs-dismiss="modal">
+              Cancelar
+            </button>
+            <button type="button" class="btn btn-success" (click)="timbrarFactura()"
+              [disabled]="!facturaForm.valid || emailInput.invalid">
+              <i class="fas fa-file-invoice"></i> Timbrar y Descargar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Factura Global -->
+<div class="modal fade" id="globalInvoiceModal" tabindex="-1" aria-labelledby="globalInvoiceModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="globalInvoiceModalLabel">Factura Global</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="globalInvoiceSucursalIds?.length" class="alert alert-info">
+          Factura global considerará {{ getGlobalFacturaSucursalLabel() }}.
+        </div>
+        <form>
+          <div class="mb-3">
+            <label for="rfcReceptor" class="form-label">RFC Receptor</label>
+            <input type="text" id="rfcReceptor" class="form-control" value="XAXX010101000" readonly>
+          </div>
+          <div class="mb-3">
+            <label for="nombreReceptor" class="form-label">Nombre Receptor</label>
+            <input type="text" id="nombreReceptor" class="form-control" value="PUBLICO EN GENERAL" readonly>
+          </div>
+          <div class="mb-3">
+            <label for="regimenFiscalReceptor" class="form-label">Régimen Fiscal Receptor</label>
+            <input type="text" id="regimenFiscalReceptor" class="form-control" value="616 - Sin obligaciones fiscales"
+              readonly>
+          </div>
+          <div class="mb-3">
+            <label for="usoCfdi" class="form-label">Uso CFDI</label>
+            <input type="text" id="usoCfdi" class="form-control" value="S01 - Sin efectos fiscales" readonly>
+          </div>
+          <div class="mb-3">
+            <label for="formaPago" class="form-label">Forma de pago</label>
+            <select id="formaPago" class="form-select" [(ngModel)]="selectedFormaPago" name="formaPago">
+              <option value="28">28 - Tarjeta de débito</option>
+              <option value="04">04 - Tarjeta de crédito</option>
+              <option value="01">01 - Efectivo</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="metodoPago" class="form-label">Método de pago</label>
+            <input type="text" id="metodoPago" class="form-control" value="PUE" readonly>
+          </div>
+          <div class="mb-3">
+            <label for="lugarExpedicion" class="form-label">Lugar de expedición</label>
+            <input type="text" id="lugarExpedicion" class="form-control" value="52105" readonly>
+          </div>
+          <div class="mb-3">
+            <label for="periodicidad" class="form-label">Periodicidad</label>
+            <input type="text" id="periodicidad" class="form-control" value="Mensual" readonly>
+          </div>
+          <div class="mb-3">
+            <label for="mes" class="form-label">Seleccionar Mes</label>
+            <select id="mes" class="form-select" [(ngModel)]="selectedMonth" name="mes">
+              <option *ngFor="let mes of meses" [value]="mes.value">{{ mes.nombre }} {{ anioActual }}</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <button type="button" class="btn btn-primary" (click)="cargarResumenMes()">Cargar Resumen</button>
+          </div>
+          <div *ngIf="resumenMes">
+            <p>Total Vendido (No facturado): {{ resumenMes.totalVendido | currency:'MXN' }}</p>
+            <p>Descuentos 6ª: -{{ resumenMes.descuentos6a | currency:'MXN' }} ({{ resumenMes.descuentos6aCount || 0 }})
+            </p>
+            <p><strong>Total Disponible para Facturar:</strong> {{ resumenMes.totalDisponible | currency:'MXN' }}</p>
+            <hr>
+            <p>Total Facturado (ya emitido): {{ resumenMes.totalFacturado | currency:'MXN' }}</p>
+          </div>
+          <div class="mb-3">
+            <label for="monto" class="form-label">Monto a Facturar</label>
+            <input type="number" id="monto" class="form-control" [(ngModel)]="montoAFacturar" name="monto" min="0"
+              required>
+          </div>
+          <div class="mb-3">
+            <button type="button" class="btn btn-success" (click)="seleccionarVentas()"
+              [disabled]="!montoAFacturar || montoAFacturar <= 0">Seleccionar Ventas Automáticamente</button>
+            <small class="form-text text-muted">
+              <span *ngIf="selectedMonth">Buscará ventas de {{ getMesNombre(selectedMonth) }} {{ anioActual }} que no
+                estén facturadas.</span>
+              <span *ngIf="!selectedMonth && isHistoricalView">Buscará ventas del período histórico actual ({{
+                getSelectedMonthName() }} {{ selectedHistoricalYear }}) que no estén facturadas.</span>
+              <span *ngIf="!selectedMonth && !isHistoricalView">Buscará ventas del mes actual que no estén
+                facturadas.</span>
+            </small>
+          </div>
+          <div class="mb-3">
+            <label for="emailGlobal" class="form-label">Correo electrónico (opcional)</label>
+            <input type="email" id="emailGlobal" class="form-control" [(ngModel)]="datosFiscales.email"
+              name="emailGlobal" pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+              #emailGlobalInput="ngModel" />
+            <div *ngIf="emailGlobalInput.invalid && emailGlobalInput.touched" class="text-danger">
+              Ingresa un correo válido si deseas recibir la factura por email.
             </div>
-          </form>
+          </div>
+        </form>
+        <div *ngIf="ventasSeleccionadas.length > 0" class="mt-3">
+          <h5>Ventas Seleccionadas</h5>
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                <th>Fecha de Venta</th>
+                <th>Folio de Venta</th>
+                <th>Importe</th>
+                <th>Excluir</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let venta of ventasSeleccionadas">
+                <td>{{ venta.fecha | date:'dd/MM/yyyy' }}</td>
+                <td>{{ venta.numeroRecibo }}</td>
+                <td>{{ venta.total | currency:'MXN' }}</td>
+                <td>
+                  <input type="checkbox" [(ngModel)]="venta.excluir" (change)="actualizarTotalSeleccionado()" />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p>Total Acumulado: {{ totalSeleccionado | currency:'MXN' }} / Monto Objetivo: {{ montoAFacturar |
+            currency:'MXN' }}</p>
+        </div>
+        <div class="d-flex justify-content-between mt-3">
+          <button type="button" class="btn btn-secondary" (click)="limpiarModalFacturaGlobal()">Limpiar</button>
+          <button type="button" class="btn btn-primary" (click)="generarFacturaGlobal()"
+            [disabled]="ventasSeleccionadas.length === 0">Generar Factura Global</button>
         </div>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- Modal para Factura Global -->
-  <div class="modal fade" id="globalInvoiceModal" tabindex="-1" aria-labelledby="globalInvoiceModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="globalInvoiceModalLabel">Factura Global</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-        </div>
-        <div class="modal-body">
-          <div *ngIf="globalInvoiceSucursalIds?.length" class="alert alert-info">
-            Factura global considerará {{ getGlobalFacturaSucursalLabel() }}.
-          </div>
-          <form>
-            <div class="mb-3">
-              <label for="rfcReceptor" class="form-label">RFC Receptor</label>
-              <input type="text" id="rfcReceptor" class="form-control" value="XAXX010101000" readonly>
-            </div>
-            <div class="mb-3">
-              <label for="nombreReceptor" class="form-label">Nombre Receptor</label>
-              <input type="text" id="nombreReceptor" class="form-control" value="PUBLICO EN GENERAL" readonly>
-            </div>
-            <div class="mb-3">
-              <label for="regimenFiscalReceptor" class="form-label">Régimen Fiscal Receptor</label>
-              <input type="text" id="regimenFiscalReceptor" class="form-control" value="616 - Sin obligaciones fiscales" readonly>
-            </div>
-            <div class="mb-3">
-              <label for="usoCfdi" class="form-label">Uso CFDI</label>
-              <input type="text" id="usoCfdi" class="form-control" value="S01 - Sin efectos fiscales" readonly>
-            </div>
-            <div class="mb-3">
-              <label for="formaPago" class="form-label">Forma de pago</label>
-              <select id="formaPago" class="form-select" [(ngModel)]="selectedFormaPago" name="formaPago">
-                <option value="28">28 - Tarjeta de débito</option>
-                <option value="04">04 - Tarjeta de crédito</option>
-                <option value="01">01 - Efectivo</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="metodoPago" class="form-label">Método de pago</label>
-              <input type="text" id="metodoPago" class="form-control" value="PUE" readonly>
-            </div>
-            <div class="mb-3">
-              <label for="lugarExpedicion" class="form-label">Lugar de expedición</label>
-              <input type="text" id="lugarExpedicion" class="form-control" value="52105" readonly>
-            </div>
-            <div class="mb-3">
-              <label for="periodicidad" class="form-label">Periodicidad</label>
-              <input type="text" id="periodicidad" class="form-control" value="Mensual" readonly>
-            </div>
-            <div class="mb-3">                  
-              <label for="mes" class="form-label">Seleccionar Mes</label>
-              <select id="mes" class="form-select" [(ngModel)]="selectedMonth" name="mes">
-                <option *ngFor="let mes of meses" [value]="mes.value">{{ mes.nombre }} {{ anioActual }}</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <button type="button" class="btn btn-primary" (click)="cargarResumenMes()">Cargar Resumen</button>
-            </div>
-            <div *ngIf="resumenMes">
-              <p>Total Vendido (No facturado): {{ resumenMes.totalVendido | currency:'MXN' }}</p>
-              <p>Descuentos 6ª: -{{ resumenMes.descuentos6a | currency:'MXN' }} ({{ resumenMes.descuentos6aCount || 0 }})</p>
-              <p><strong>Total Disponible para Facturar:</strong> {{ resumenMes.totalDisponible | currency:'MXN' }}</p>
-              <hr>
-              <p>Total Facturado (ya emitido): {{ resumenMes.totalFacturado | currency:'MXN' }}</p>
-            </div>
-            <div class="mb-3">
-              <label for="monto" class="form-label">Monto a Facturar</label>
-              <input type="number" id="monto" class="form-control" [(ngModel)]="montoAFacturar" name="monto" min="0" required>
-            </div>
-            <div class="mb-3">
-              <button type="button" class="btn btn-success" (click)="seleccionarVentas()" [disabled]="!montoAFacturar || montoAFacturar <= 0">Seleccionar Ventas Automáticamente</button>
-              <small class="form-text text-muted">
-                <span *ngIf="selectedMonth">Buscará ventas de {{ getMesNombre(selectedMonth) }} {{ anioActual }} que no estén facturadas.</span>
-                <span *ngIf="!selectedMonth && isHistoricalView">Buscará ventas del período histórico actual ({{ getSelectedMonthName() }} {{ selectedHistoricalYear }}) que no estén facturadas.</span>
-                <span *ngIf="!selectedMonth && !isHistoricalView">Buscará ventas del mes actual que no estén facturadas.</span>
-              </small>
-            </div>
-            <div class="mb-3">
-              <label for="emailGlobal" class="form-label">Correo electrónico (opcional)</label>
-              <input
-                type="email"
-                id="emailGlobal"
-                class="form-control"
-                [(ngModel)]="datosFiscales.email"
-                name="emailGlobal"
-                pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-                #emailGlobalInput="ngModel"
-              />
-              <div
-                *ngIf="emailGlobalInput.invalid && emailGlobalInput.touched"
-                class="text-danger"
-              >
-                Ingresa un correo válido si deseas recibir la factura por email.
-              </div>
-            </div>
-          </form>
-          <div *ngIf="ventasSeleccionadas.length > 0" class="mt-3">
-            <h5>Ventas Seleccionadas</h5>
-            <table class="table table-bordered">
-              <thead>
-                <tr>
-                  <th>Fecha de Venta</th>
-                  <th>Folio de Venta</th>
-                  <th>Importe</th>
-                  <th>Excluir</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let venta of ventasSeleccionadas">
-                  <td>{{ venta.fecha | date:'dd/MM/yyyy' }}</td>
-                  <td>{{ venta.numeroRecibo }}</td>
-                  <td>{{ venta.total | currency:'MXN' }}</td>
-                  <td>
-                    <input type="checkbox" [(ngModel)]="venta.excluir" (change)="actualizarTotalSeleccionado()" />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <p>Total Acumulado: {{ totalSeleccionado | currency:'MXN' }} / Monto Objetivo: {{ montoAFacturar | currency:'MXN' }}</p>
-          </div>
-          <div class="d-flex justify-content-between mt-3">
-            <button type="button" class="btn btn-secondary" (click)="limpiarModalFacturaGlobal()">Limpiar</button>
-            <button type="button" class="btn btn-primary" (click)="generarFacturaGlobal()" [disabled]="ventasSeleccionadas.length === 0">Generar Factura Global</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const customTicketModal = document.getElementById('customTicketModal');
-      if (customTicketModal) {
-        customTicketModal.addEventListener('hidden.bs.modal', function() {
-          setTimeout(() => {
-            const ticketModal = document.getElementById('ticketModal');
-            if (ticketModal) {
-              const ticketModalInstance = new bootstrap.Modal(ticketModal);
-              ticketModalInstance.show();
-            }
-          }, 100);
-        }, { once: true });
-      }
-    });
-  </script>
- 
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const customTicketModal = document.getElementById('customTicketModal');
+    if (customTicketModal) {
+      customTicketModal.addEventListener('hidden.bs.modal', function () {
+        setTimeout(() => {
+          const ticketModal = document.getElementById('ticketModal');
+          if (ticketModal) {
+            const ticketModalInstance = new bootstrap.Modal(ticketModal);
+            ticketModalInstance.show();
+          }
+        }, 100);
+      }, { once: true });
+    }
+  });
+</script>

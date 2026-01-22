@@ -565,8 +565,9 @@ export class PosComponent implements OnInit {
       // Escuchar el evento de cierre del modal
       const modalElement = document.getElementById('receiptModal');
       modalElement?.addEventListener('hidden.bs.modal', () => {
-        // Mostrar el popup de facturación después de cerrar el ticket
-        this.showSaleCompletedPopup = true;
+        // Ocultado por solicitud: ¿Deseas facturar esta venta?
+        // this.showSaleCompletedPopup = true;
+        this.clearCart(); 
       }, { once: true }); // El evento se ejecutará solo una vez
     }, 500);
   }
@@ -596,21 +597,16 @@ export class PosComponent implements OnInit {
     doc.setFontSize(10);
 
     // Encabezado: Domicilio Fiscal
-    doc.text('AUTOLAVADO RL', 29, yPosition, { align: 'center' });
+    doc.text('AP CAR WASH', 29, yPosition, { align: 'center' });
     yPosition += lineHeight;
     doc.text('¡Gracias por su Compra!', 29, yPosition, { align: 'center' });
     yPosition += lineHeight;
-    doc.text('Domicilio Fiscal:', 29, yPosition, { align: 'center' });
+    doc.text('Sucursal:', 29, yPosition, { align: 'center' });
     yPosition += lineHeight;
-    doc.text('Calle: RIVA PALACIO No. 1139', 29, yPosition, { align: 'center' });
+    doc.text(`${ticketData.branch}`, 29, yPosition, { align: 'center' });
     yPosition += lineHeight;
-    doc.text('Col. SAN ISIDRO, CP: 52105', 29, yPosition, { align: 'center' });
-    yPosition += lineHeight;
-    doc.text('SAN MATEO ATENCO,', 29, yPosition, { align: 'center' });
-    yPosition += lineHeight;
-    doc.text('MEXICO, MEXICO.', 29, yPosition, { align: 'center' });
-    yPosition += lineHeight;
-    doc.text('RFC: ARL210713UK5', 29, yPosition, { align: 'center' });
+    // Ocultar RFC y dirección original de RL
+    // doc.text('RFC: ARL210713UK5', 29, yPosition, { align: 'center' });
 
     doc.setLineWidth(0.5);
     yPosition += 2;

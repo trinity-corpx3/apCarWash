@@ -1,7 +1,7 @@
 /* Sidebar principal */
 #sidebar {
   width: 160px;
-  background: linear-gradient(180deg, #007bff 0%, #0056b3 100%);
+  background: #990000;
   height: 100vh;
   position: fixed;
   left: 0;

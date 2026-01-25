@@ -90,6 +90,31 @@ export class PosComponent implements OnInit {
   // Fecha/hora de la última venta devuelta por el backend
   lastSaleDate: string = '';
 
+  // Descuentos promocionales
+  descuentosDisponibles = [
+    {
+      tipo: 'MIERCOLES_HOMBRES',
+      porcentaje: 10,
+      nombre: 'Miércoles de Hombres',
+      descripcion: '10% de descuento (solo miércoles)'
+    },
+    {
+      tipo: 'JUEVES_MUJERES',
+      porcentaje: 10,
+      nombre: 'Jueves de Mujeres',
+      descripcion: '10% de descuento (solo jueves)'
+    },
+    {
+      tipo: 'TICKET_GASOLINA',
+      porcentaje: 25,
+      nombre: 'Ticket de Gasolina',
+      descripcion: '25% de descuento (ticket > $300)'
+    }
+  ];
+  descuentoSeleccionado: any = null;
+  montoTicketGasolina: number = 0;
+
+
   constructor(
     private authService: AuthService,
     private router: Router,
@@ -328,6 +353,10 @@ export class PosComponent implements OnInit {
     this.descuentoAplicado = 0;
     this.plateQuickInfo = null;
 
+    // Limpiar descuentos promocionales
+    this.descuentoSeleccionado = null;
+    this.montoTicketGasolina = 0;
+
     // Limpia el estado del modal y el backdrop
     document.body.classList.remove('modal-open');
     const backdrop = document.querySelector('.modal-backdrop');
@@ -370,12 +399,40 @@ export class PosComponent implements OnInit {
     }
   }
 
+  // Métodos para descuentos promocionales
+  seleccionarDescuento(descuento: any): void {
+    this.descuentoSeleccionado = descuento;
+    this.calculateChange(); // Recalcular cambio con el nuevo descuento
+  }
+
+  quitarDescuento(): void {
+    this.descuentoSeleccionado = null;
+    this.montoTicketGasolina = 0;
+    this.calculateChange(); // Recalcular cambio sin descuento
+  }
+
+  calcularDescuentoPromocional(): number {
+    if (!this.descuentoSeleccionado) return 0;
+
+    const subtotal = this.calculateTotal();
+    return subtotal * (this.descuentoSeleccionado.porcentaje / 100);
+  }
+
+  calcularTotalConDescuentos(): number {
+    const subtotal = this.calculateTotal();
+    const descuentoLealtad = this.calculateHighestPackageDiscount();
+    const descuentoPromocional = this.calcularDescuentoPromocional();
+
+    return subtotal - descuentoLealtad - descuentoPromocional;
+  }
+
+
 
 
   // Método para calcular el cambio
   calculateChange(): void {
     if (this.paymentMethod === 'Efectivo') {
-      const total = this.calcularTotalConDescuento();
+      const total = this.calcularTotalConDescuentos();
       this.change = this.amountReceived > 0 ? this.amountReceived - total : 0;
 
       this.saleInProgress = this.amountReceived < total; // Bloquear venta si el monto recibido es insuficiente
@@ -415,14 +472,19 @@ export class PosComponent implements OnInit {
       placa: this.placa || '',
       nota: this.getNotaCompleta() || '',
       metodoPago: this.paymentMethod,
-      total: this.calculateTotal(),
+      total: this.calcularTotalConDescuentos(), // Total con descuentos aplicados
       productos: this.cart.map((item) => ({
         id: item.id,
         cantidad: item.cantidad,
       })),
       cantidadRecibida: this.amountReceived || 0,
       cambio: this.change || 0,
-      facturada: false // No marcar como facturada por defecto
+      facturada: false, // No marcar como facturada por defecto
+      // Descuentos promocionales
+      descuentoPromocionalTipo: this.descuentoSeleccionado?.tipo || null,
+      descuentoPromocionalPorcentaje: this.descuentoSeleccionado?.porcentaje || null,
+      descuentoPromocionalMonto: this.calcularDescuentoPromocional() || null,
+      ticketGasolinaMonto: this.descuentoSeleccionado?.tipo === 'TICKET_GASOLINA' ? this.montoTicketGasolina : null
     };
 
     this.http.post(`${environment.apiUrl}/ordenes-compra`, orderData).subscribe(
@@ -567,7 +629,7 @@ export class PosComponent implements OnInit {
       modalElement?.addEventListener('hidden.bs.modal', () => {
         // Ocultado por solicitud: ¿Deseas facturar esta venta?
         // this.showSaleCompletedPopup = true;
-        this.clearCart(); 
+        this.clearCart();
       }, { once: true }); // El evento se ejecutará solo una vez
     }, 500);
   }
@@ -719,6 +781,25 @@ export class PosComponent implements OnInit {
       doc.text(`Descuento 6ª visita: -$${this.descuentoAplicado.toFixed(2)}`, 5, yPosition);
       yPosition += lineHeight;
     }
+
+    // Descuento promocional
+    if (this.descuentoSeleccionado && this.calcularDescuentoPromocional() > 0) {
+      const nombreDescuento = this.descuentoSeleccionado.nombre;
+      const montoDescuento = this.calcularDescuentoPromocional();
+      doc.text(`${nombreDescuento}: -$${montoDescuento.toFixed(2)}`, 5, yPosition);
+      yPosition += lineHeight;
+
+      // Si es ticket de gasolina, mostrar el monto del ticket
+      if (this.descuentoSeleccionado.tipo === 'TICKET_GASOLINA' && this.montoTicketGasolina > 0) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.text(`(Ticket gasolina: $${this.montoTicketGasolina.toFixed(2)})`, 5, yPosition);
+        yPosition += lineHeight;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+      }
+    }
+
     doc.text(`Total Vendido: $${ticketData.total.toFixed(2)}`, 5, yPosition);
     yPosition += lineHeight;
 

@@ -1105,3 +1105,19 @@
     font-size: 0.55rem;
   }
 }
+
+/* Estilos para información de descuentos en detalles de orden */
+.discount-info {
+  background-color: #f8f9fa;
+  padding: 12px;
+  border-radius: 6px;
+  border-left: 4px solid #28a745;
+}
+
+.discount-info .d-flex {
+  font-size: 14px;
+}
+
+.discount-info i {
+  margin-right: 6px;
+}

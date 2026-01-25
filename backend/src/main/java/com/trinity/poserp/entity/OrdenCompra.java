@@ -57,6 +57,19 @@ public class OrdenCompra {
     @Column(name = "loyalty_discount_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal loyaltyDiscountAmount = BigDecimal.ZERO;
 
+    // Campos para descuentos promocionales
+    @Column(name = "descuento_promocional_tipo", length = 50)
+    private String descuentoPromocionalTipo; // MIERCOLES_HOMBRES, JUEVES_MUJERES, TICKET_GASOLINA
+
+    @Column(name = "descuento_promocional_porcentaje", precision = 5, scale = 2)
+    private Double descuentoPromocionalPorcentaje;
+
+    @Column(name = "descuento_promocional_monto", precision = 10, scale = 2)
+    private Double descuentoPromocionalMonto;
+
+    @Column(name = "ticket_gasolina_monto", precision = 10, scale = 2)
+    private Double ticketGasolinaMonto; // Solo para TICKET_GASOLINA
+
     public Double getCantidadRecibida() {
         return cantidadRecibida;
     }
@@ -221,6 +234,37 @@ public class OrdenCompra {
         this.loyaltyDiscountAmount = loyaltyDiscountAmount;
     }
 
-    // Getters y setters
-    // ...
+    // Getters y setters para descuentos promocionales
+    public String getDescuentoPromocionalTipo() {
+        return descuentoPromocionalTipo;
+    }
+
+    public void setDescuentoPromocionalTipo(String descuentoPromocionalTipo) {
+        this.descuentoPromocionalTipo = descuentoPromocionalTipo;
+    }
+
+    public Double getDescuentoPromocionalPorcentaje() {
+        return descuentoPromocionalPorcentaje;
+    }
+
+    public void setDescuentoPromocionalPorcentaje(Double descuentoPromocionalPorcentaje) {
+        this.descuentoPromocionalPorcentaje = descuentoPromocionalPorcentaje;
+    }
+
+    public Double getDescuentoPromocionalMonto() {
+        return descuentoPromocionalMonto;
+    }
+
+    public void setDescuentoPromocionalMonto(Double descuentoPromocionalMonto) {
+        this.descuentoPromocionalMonto = descuentoPromocionalMonto;
+    }
+
+    public Double getTicketGasolinaMonto() {
+        return ticketGasolinaMonto;
+    }
+
+    public void setTicketGasolinaMonto(Double ticketGasolinaMonto) {
+        this.ticketGasolinaMonto = ticketGasolinaMonto;
+    }
+
 }

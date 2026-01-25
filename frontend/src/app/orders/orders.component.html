@@ -193,7 +193,14 @@
               <td>{{ orden.id }}</td>
               <td>
                 {{ orden.numeroRecibo }}
-                <span *ngIf="orden.loyaltyApplied" class="badge bg-info ms-1">6ª</span>
+                <span *ngIf="orden.loyaltyApplied" class="badge bg-info ms-1"
+                  title="Descuento 6ª visita aplicado">6ª</span>
+                <span *ngIf="orden.descuentoPromocionalTipo === 'MIERCOLES_HOMBRES'" class="badge bg-success ms-1"
+                  title="Miércoles de Hombres (10%)">MH</span>
+                <span *ngIf="orden.descuentoPromocionalTipo === 'JUEVES_MUJERES'" class="badge bg-success ms-1"
+                  title="Jueves de Mujeres (10%)">JM</span>
+                <span *ngIf="orden.descuentoPromocionalTipo === 'TICKET_GASOLINA'" class="badge bg-warning ms-1"
+                  title="Ticket de Gasolina (25%)">TG</span>
               </td>
               <td>{{ orden.total | currency:'MXN' }}</td>
               <td>{{ orden.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
@@ -257,6 +264,36 @@
                       </tr>
                     </tbody>
                   </table>
+
+                  <!-- Información de Descuentos -->
+                  <div *ngIf="orden.loyaltyApplied || orden.descuentoPromocionalTipo" class="mt-3">
+                    <h6 class="text-muted">Descuentos Aplicados:</h6>
+                    <div class="discount-info">
+                      <div *ngIf="orden.loyaltyApplied" class="d-flex justify-content-between mb-2">
+                        <span><i class="fas fa-gift text-info"></i> Descuento 6ª Visita:</span>
+                        <strong class="text-success">-{{ orden.loyaltyDiscountAmount | currency:'MXN' }}</strong>
+                      </div>
+
+                      <div *ngIf="orden.descuentoPromocionalTipo" class="d-flex justify-content-between mb-2">
+                        <span>
+                          <i class="fas fa-tag text-success"></i>
+                          <span *ngIf="orden.descuentoPromocionalTipo === 'MIERCOLES_HOMBRES'">Miércoles de Hombres ({{
+                            orden.descuentoPromocionalPorcentaje }}%)</span>
+                          <span *ngIf="orden.descuentoPromocionalTipo === 'JUEVES_MUJERES'">Jueves de Mujeres ({{
+                            orden.descuentoPromocionalPorcentaje }}%)</span>
+                          <span *ngIf="orden.descuentoPromocionalTipo === 'TICKET_GASOLINA'">Ticket de Gasolina ({{
+                            orden.descuentoPromocionalPorcentaje }}%)</span>
+                        </span>
+                        <strong class="text-success">-{{ orden.descuentoPromocionalMonto | currency:'MXN' }}</strong>
+                      </div>
+
+                      <div *ngIf="orden.descuentoPromocionalTipo === 'TICKET_GASOLINA' && orden.ticketGasolinaMonto"
+                        class="text-muted small">
+                        <i class="fas fa-gas-pump"></i> Monto del ticket de gasolina: {{ orden.ticketGasolinaMonto |
+                        currency:'MXN' }}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </td>
             </tr>

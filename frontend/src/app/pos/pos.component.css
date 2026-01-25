@@ -1006,3 +1006,45 @@ body {
         padding: 8px 16px;
     }
 }
+
+/* Estilos para descuentos promocionales */
+.discount-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.discount-card {
+  padding: 12px;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: #fff;
+}
+
+.discount-card:hover {
+  border-color: #28a745;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+  transform: translateY(-2px);
+}
+
+.discount-card.selected {
+  border-color: #28a745;
+  background-color: #d4edda;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.discount-card strong {
+  font-size: 14px;
+  color: #212529;
+}
+
+.discount-card small {
+  font-size: 12px;
+}
+
+.discount-card .badge {
+  font-size: 14px;
+  padding: 6px 10px;
+}

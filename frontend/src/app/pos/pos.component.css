@@ -1009,42 +1009,84 @@ body {
 
 /* Estilos para descuentos promocionales */
 .discount-options {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .discount-card {
-  padding: 12px;
-  border: 2px solid #dee2e6;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background-color: #fff;
+    padding: 12px;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: #fff;
 }
 
 .discount-card:hover {
-  border-color: #28a745;
-  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
-  transform: translateY(-2px);
+    border-color: #28a745;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+    transform: translateY(-2px);
 }
 
 .discount-card.selected {
-  border-color: #28a745;
-  background-color: #d4edda;
-  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+    border-color: #28a745;
+    background-color: #d4edda;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
 }
 
 .discount-card strong {
-  font-size: 14px;
-  color: #212529;
+    font-size: 14px;
+    color: #212529;
 }
 
 .discount-card small {
-  font-size: 12px;
+    font-size: 12px;
 }
 
 .discount-card .badge {
-  font-size: 14px;
-  padding: 6px 10px;
+    font-size: 14px;
+    padding: 6px 10px;
+}
+
+/* Estilos compactos para descuentos promocionales */
+.discount-options-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.discount-card-compact {
+    padding: 8px 10px;
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: #fff;
+}
+
+.discount-card-compact:hover {
+    border-color: #28a745;
+    box-shadow: 0 1px 4px rgba(40, 167, 69, 0.2);
+}
+
+.discount-card-compact.selected {
+    border-color: #28a745;
+    background-color: #d4edda;
+    box-shadow: 0 1px 4px rgba(40, 167, 69, 0.3);
+}
+
+.discount-info-compact {
+    display: flex;
+    align-items: center;
+}
+
+.discount-name-compact {
+    font-size: 13px;
+    color: #212529;
+}
+
+.discount-card-compact .badge {
+    font-size: 12px;
+    padding: 3px 8px;
 }

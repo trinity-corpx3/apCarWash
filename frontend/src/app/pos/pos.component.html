@@ -372,47 +372,40 @@
               </div>
 
               <!-- Descuentos Promocionales -->
-              <div class="mt-3">
-                <h6 class="mb-2">Descuentos Promocionales</h6>
-                <div class="discount-options">
-                  <div class="discount-card" *ngFor="let descuento of descuentosDisponibles"
+              <div class="mt-2">
+                <div class="discount-options-compact">
+                  <div class="discount-card-compact" *ngFor="let descuento of descuentosDisponibles"
                     [class.selected]="descuentoSeleccionado?.tipo === descuento.tipo"
                     (click)="seleccionarDescuento(descuento)">
                     <div class="d-flex justify-content-between align-items-center">
-                      <div>
-                        <strong>{{ descuento.nombre }}</strong>
-                        <br>
-                        <small class="text-muted">{{ descuento.descripcion }}</small>
+                      <div class="discount-info-compact">
+                        <strong class="discount-name-compact">{{ descuento.nombre }}</strong>
+                        <span class="badge bg-success ms-2">{{ descuento.porcentaje }}%</span>
                       </div>
-                      <span class="badge bg-success">{{ descuento.porcentaje }}%</span>
                     </div>
 
                     <!-- Campo especial para Ticket de Gasolina -->
                     <div
                       *ngIf="descuento.tipo === 'TICKET_GASOLINA' && descuentoSeleccionado?.tipo === 'TICKET_GASOLINA'"
-                      class="mt-2">
-                      <label class="form-label">Monto del ticket:</label>
-                      <input type="number" [(ngModel)]="montoTicketGasolina" placeholder="Ej: 350"
+                      class="mt-1">
+                      <input type="number" [(ngModel)]="montoTicketGasolina" placeholder="Monto ticket"
                         class="form-control form-control-sm" (click)="$event.stopPropagation()">
-                      <small *ngIf="montoTicketGasolina < 300" class="text-danger">
-                        El ticket debe ser mayor a $300
-                      </small>
                     </div>
                   </div>
                 </div>
 
-                <button *ngIf="descuentoSeleccionado" class="btn btn-sm btn-outline-danger mt-2 w-100"
+                <button *ngIf="descuentoSeleccionado" class="btn btn-sm btn-outline-danger mt-1 w-100"
                   (click)="quitarDescuento()">
-                  <i class="fas fa-times"></i> Quitar descuento
+                  <i class="fas fa-times"></i> Quitar
                 </button>
+              </div>
 
-                <div *ngIf="descuentoSeleccionado" class="alert alert-success mt-2 mb-0">
-                  <small>
-                    <i class="fas fa-check-circle"></i>
-                    Descuento aplicado: <strong>{{ descuentoSeleccionado.nombre }}</strong>
-                    (-${{ calcularDescuentoPromocional() | number:'1.2-2' }})
-                  </small>
-                </div>
+              <div *ngIf="descuentoSeleccionado" class="alert alert-success mt-2 mb-0">
+                <small>
+                  <i class="fas fa-check-circle"></i>
+                  Descuento aplicado: <strong>{{ descuentoSeleccionado.nombre }}</strong>
+                  (-${{ calcularDescuentoPromocional() | number:'1.2-2' }})
+                </small>
               </div>
 
               <div class="btn-group-payment mt-3">

@@ -61,13 +61,13 @@ public class OrdenCompra {
     @Column(name = "descuento_promocional_tipo", length = 50)
     private String descuentoPromocionalTipo; // MIERCOLES_HOMBRES, JUEVES_MUJERES, TICKET_GASOLINA
 
-    @Column(name = "descuento_promocional_porcentaje", precision = 5, scale = 2)
+    @Column(name = "descuento_promocional_porcentaje")
     private Double descuentoPromocionalPorcentaje;
 
-    @Column(name = "descuento_promocional_monto", precision = 10, scale = 2)
+    @Column(name = "descuento_promocional_monto")
     private Double descuentoPromocionalMonto;
 
-    @Column(name = "ticket_gasolina_monto", precision = 10, scale = 2)
+    @Column(name = "ticket_gasolina_monto")
     private Double ticketGasolinaMonto; // Solo para TICKET_GASOLINA
 
     public Double getCantidadRecibida() {

@@ -821,7 +821,7 @@ body {
 }
 
 .payment-method-option i.fas.fa-money-bill-wave {
-    color: #990000;
+    color: #28a745;
     /* Verde para efectivo */
 }
 
@@ -1089,4 +1089,140 @@ body {
 .discount-card-compact .badge {
     font-size: 12px;
     padding: 3px 8px;
+}
+
+/* ===== MOBILE RESPONSIVENESS ===== */
+@media (max-width: 768px) {
+
+    /* Header adjustments */
+    .header {
+        flex-direction: column;
+        padding: 15px;
+        gap: 10px;
+    }
+
+    .header .title {
+        font-size: 20px;
+    }
+
+    .header .user-info {
+        flex-direction: column;
+        margin-right: 0;
+        width: 100%;
+        text-align: center;
+    }
+
+    .header .user-details {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+
+    .daily-stats {
+        flex-direction: column;
+        gap: 4px;
+        font-size: 12px;
+    }
+
+    /* Main layout */
+    .d-flex {
+        flex-direction: column;
+        gap: 16px;
+        padding: 10px;
+    }
+
+    .products {
+        margin-right: 0;
+        padding: 16px;
+    }
+
+    .cart {
+        width: 100%;
+        min-width: unset;
+        position: static;
+    }
+
+    /* Product items */
+    .products .product-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .products .product-item .product-price {
+        margin: 0;
+        font-size: 18px;
+    }
+
+    /* Payment view */
+    .payment-view {
+        padding: 0 8px;
+    }
+
+    .payment-view .row {
+        margin: 0;
+    }
+
+    .payment-view .col-md-8,
+    .payment-view .col-md-4 {
+        width: 100%;
+        max-width: 100%;
+        padding: 0;
+    }
+
+    .payment-view .card {
+        margin-bottom: 12px;
+    }
+
+    /* Buttons */
+    .btn-group-payment {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .btn-group-payment .btn {
+        width: 100%;
+    }
+
+    /* Note configuration */
+    .note-config {
+        flex-direction: column;
+    }
+
+    .note-options {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    /* Discount options */
+    .discount-options-compact {
+        gap: 8px;
+    }
+
+    .discount-card-compact {
+        padding: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .header .title {
+        font-size: 18px;
+    }
+
+    .header .user-info .user-name,
+    .header .user-info .user-email,
+    .header .user-info .user-role {
+        font-size: 12px;
+    }
+
+    .products .product-item .product-info .product-name {
+        font-size: 16px;
+    }
+
+    .cart .cart-header .cart-title {
+        font-size: 14px;
+    }
+
+    .payment-view h2.mb-0 {
+        font-size: 20px;
+    }
 }

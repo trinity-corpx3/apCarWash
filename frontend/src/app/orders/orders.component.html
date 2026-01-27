@@ -171,7 +171,7 @@
             <th>Placa</th>
             <th>Cajero</th>
             <th>Estado</th>
-            <th>Facturada</th>
+            <!-- <th>Facturada</th> -->
             <th>Items</th>
             <th>Acciones</th>
           </tr>
@@ -221,11 +221,11 @@
                   {{ orden.estado }}
                 </span>
               </td>
-              <td>
+              <!-- <td>
                 <span class="badge" [ngClass]="{'bg-success': orden.facturada, 'bg-danger': !orden.facturada}">
                   {{ orden.facturada ? 'Sí' : 'No' }}
                 </span>
-              </td>
+              </td> -->
               <td>
                 <button class="btn btn-link" (click)="toggleItemDetails(orden)">
                   {{ orden.productos?.length }} items
@@ -588,7 +588,7 @@
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
+ t.addEventListener('DOMContentLoaded', function () {
     const customTicketModal = document.getElementById('customTicketModal');
     if (customTicketModal) {
       customTicketModal.addEventListener('hidden.bs.modal', function () {

@@ -1,39 +1,3 @@
-/* AP Car Wash Header for Orders */
-.ap-carwash-header-orders {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  background-color: #fff;
-  padding: 16px 20px;
-  text-align: center;
-  border-bottom: 2px solid #990000;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-}
-
-.ap-carwash-header-orders .ap-carwash-title {
-  font-size: 28px;
-  font-weight: bold;
-  color: #990000;
-  margin: 0 0 8px 0;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-}
-
-.ap-carwash-header-orders .ap-carwash-disclaimer {
-  font-size: 10px;
-  color: #333;
-  font-weight: 600;
-  line-height: 1.3;
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 6px 12px;
-  background-color: #f8f9fa;
-  border-radius: 6px;
-  border: 1px solid #dee2e6;
-}
-
 /* Reset básico - Aplicado solo a este componente */
 :host {
   display: block;
@@ -44,8 +8,6 @@
   padding: 0 !important;
   position: relative;
   overflow-x: hidden;
-  padding-top: 100px !important;
-  /* Space for fixed header */
 }
 
 /* Eliminar cualquier estilo de Bootstrap que pueda interferir SOLO dentro de orders */

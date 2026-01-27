@@ -808,17 +808,21 @@ export class PosComponent implements OnInit {
     doc.line(5, yPosition, 53, yPosition);
     yPosition += lineHeight;
 
-    doc.setFont('helvetica', 'italic');
-    doc.setFontSize(9);
-    const centerX = 29; // ancho/2 del ticket de 58mm (~54mm imprimibles)
-    // Envolver líneas largas para que no se corten y mantener centrado
-    const maxTextWidth = 48; // ~ margen horizontal útil
-    const aviso1 = doc.splitTextToSize('FAVOR DE NO DEJAR EN EL VEHÍCULO OBJETOS DE VALOR.', maxTextWidth);
-    const aviso2 = doc.splitTextToSize('LA EMPRESA NO SE HACE RESPONSABLE', maxTextWidth);
-    aviso1.forEach((l: string) => { doc.text(l, centerX, yPosition, { align: 'center' }); yPosition += lineHeight; });
-    aviso2.forEach((l: string) => { doc.text(l, centerX, yPosition, { align: 'center' }); yPosition += lineHeight; });
-
     doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    const centerX = 29; // ancho/2 del ticket de 58mm (~54mm imprimibles)
+    doc.text('AP CAR WASH', centerX, yPosition, { align: 'center' });
+    yPosition += lineHeight;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    const maxTextWidth = 48; // ~ margen horizontal útil
+    const disclaimer = doc.splitTextToSize('NO, NOS HACEMOS RESPONSABLES: POR FALLA O DAÑOS EN EL VEHÍCULO YA QUE NO CONOCEMOS EL ESTADO DEL MISMO (LLAVES, PORTA PLACA, RETROVISOR, SISTEMA ELÉCTRICO EN GENERAL) ASÍ MISMO POR OBJETOS DE VALOR NO REPORTADOS A LA ADMINISTRACIÓN', maxTextWidth);
+    disclaimer.forEach((l: string) => { doc.text(l, centerX, yPosition, { align: 'center' }); yPosition += lineHeight; });
+
+    yPosition += lineHeight;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
     doc.text('GRACIAS POR SU VISITA', centerX, yPosition, { align: 'center' });
     yPosition += lineHeight;
     doc.text('VUELVA PRONTO', centerX, yPosition, { align: 'center' });

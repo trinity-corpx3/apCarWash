@@ -1154,6 +1154,31 @@ export class OrdersComponent implements OnInit {
     yPosition += lineHeight;
     doc.text(`TOTAL SERVICIOS: ${ticketData.totalItems}`, 5, yPosition);
 
+    // Disclaimer
+    doc.setLineWidth(0.5);
+    yPosition += lineHeight;
+    doc.line(5, yPosition, 53, yPosition);
+    yPosition += lineHeight;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    const centerX = 29;
+    doc.text('AP CAR WASH', centerX, yPosition, { align: 'center' });
+    yPosition += lineHeight;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    const maxTextWidth = 48;
+    const disclaimer = doc.splitTextToSize('NO, NOS HACEMOS RESPONSABLES: POR FALLA O DAÑOS EN EL VEHÍCULO YA QUE NO CONOCEMOS EL ESTADO DEL MISMO (LLAVES, PORTA PLACA, RETROVISOR, SISTEMA ELÉCTRICO EN GENERAL) ASÍ MISMO POR OBJETOS DE VALOR NO REPORTADOS A LA ADMINISTRACIÓN', maxTextWidth);
+    disclaimer.forEach((l: string) => { doc.text(l, centerX, yPosition, { align: 'center' }); yPosition += lineHeight; });
+
+    yPosition += lineHeight;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text('GRACIAS POR SU VISITA', centerX, yPosition, { align: 'center' });
+    yPosition += lineHeight;
+    doc.text('VUELVA PRONTO', centerX, yPosition, { align: 'center' });
+
 
     // Generar blob y URL del PDF
     const pdfBlob = doc.output('blob');

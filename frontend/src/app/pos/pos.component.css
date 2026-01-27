@@ -1,3 +1,34 @@
+/* AP Car Wash Header */
+.ap-carwash-header {
+    background-color: #fff;
+    padding: 20px;
+    text-align: center;
+    border-bottom: 2px solid #990000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ap-carwash-title {
+    font-size: 32px;
+    font-weight: bold;
+    color: #990000;
+    margin: 0 0 12px 0;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.ap-carwash-disclaimer {
+    font-size: 11px;
+    color: #333;
+    font-weight: 600;
+    line-height: 1.4;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 8px 16px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
 body {
     background-color: #f8f9fa;
 }

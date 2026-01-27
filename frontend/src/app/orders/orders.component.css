@@ -389,19 +389,17 @@
 }
 
 .table td.actions {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  padding: 4px 2px;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  padding: 8px 4px;
 }
 
 .table td.actions .btn {
   padding: 3px 8px;
   font-size: 0.7rem;
   white-space: nowrap;
-  flex-shrink: 0;
+  margin: 0 2px;
 }
 
 .table tbody tr:nth-child(even) {

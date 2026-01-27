@@ -43,7 +43,7 @@ export class SidebarComponent {
   constructor(
     public router: Router,
     private authService: AuthService
-  ) {}
+  ) { }
 
   toggleUserDropdown(event: Event): void {
     event.preventDefault();
@@ -61,8 +61,22 @@ export class SidebarComponent {
   }
 
   logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/login']);
+    // Primero limpiar el almacenamiento local
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('jwt');
+    localStorage.removeItem('basicAuth');
+
+    // Luego llamar al servicio de logout
+    this.authService.logout().subscribe({
+      next: () => {
+        this.router.navigate(['/login']);
+      },
+      error: (error) => {
+        console.error('Error al cerrar sesión:', error);
+        // Aún así, redirigir al login ya que el almacenamiento local ya está limpio
+        this.router.navigate(['/login']);
+      }
+    });
   }
 
   isActive(route: string): boolean {

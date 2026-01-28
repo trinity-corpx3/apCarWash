@@ -72,7 +72,7 @@ export class LoginComponent implements OnInit {
       case 'operador':
       case 'operator': // Added support for English 'operator'
       case '3':
-        this.router.navigate(['/pos']);
+        this.router.navigate(['/orders']);
         break;
       case 'director':
       case '4':

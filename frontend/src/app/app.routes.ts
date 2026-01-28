@@ -14,7 +14,7 @@ import { PlatesComponent } from './plates/plates.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
-  { path: 'super-admin-menu', component: SuperAdminMenuComponent, canActivate: [AuthGuard], data: { expectedRoles: ['Super Admin', 'Operator'] } },
+  { path: 'super-admin-menu', component: SuperAdminMenuComponent, canActivate: [AuthGuard], data: { expectedRoles: ['Super Admin'] } },
   { path: 'admin-menu', component: AdminMenuComponent, canActivate: [AuthGuard], data: { expectedRoles: ['Admin'] } },
   { path: 'pos', component: PosComponent, canActivate: [AuthGuard], data: { expectedRoles: ['Super Admin', 'Operator'] } },
   { path: 'orders', component: OrdersComponent, canActivate: [AuthGuard], data: { expectedRoles: ['Super Admin', 'Operator'] } },

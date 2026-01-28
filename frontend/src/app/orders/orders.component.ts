@@ -464,11 +464,13 @@ export class OrdersComponent implements OnInit {
     const userData = this.authService.getCurrentUser();
     console.log('Datos del usuario en Orders:', userData);
 
-    // Corregir la validación del rol
+    // Corregir la validación del rol para permitir Super Admin y Operator
     const userRole = typeof userData?.rol === 'string' ? userData?.rol : userData?.rol?.nombre;
-    if (!userData || !userRole || userRole !== 'Super Admin') {
-      console.error('Usuario no autorizado');
-      this.router.navigate(['/unauthorized']);
+    const normalizedRole = userRole?.toLowerCase();
+
+    if (!userData || !userRole || (normalizedRole !== 'super admin' && normalizedRole !== 'operator')) {
+      console.error('Usuario no autorizado. Rol requerido: Super Admin o Operator. Rol actual:', userRole);
+      this.router.navigate(['/login']);
       return;
     }
 

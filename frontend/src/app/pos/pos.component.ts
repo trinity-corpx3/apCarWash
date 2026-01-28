@@ -302,7 +302,7 @@ export class PosComponent implements OnInit {
         this.router.navigate(['/admin-menu']);
         break;
       case 'Operator':
-        this.router.navigate(['/pos']);
+        this.router.navigate(['/orders']);
         break;
       default:
         this.router.navigate(['/login']);

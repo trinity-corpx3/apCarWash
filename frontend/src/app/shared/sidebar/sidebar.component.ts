@@ -19,23 +19,23 @@ export class SidebarComponent {
     {
       title: 'Principal',
       items: [
-        { route: '/super-admin-menu', icon: 'fa-home', label: 'INICIO', allowedRoles: ['super admin', 'operador'] }
+        { route: '/super-admin-menu', icon: 'fa-home', label: 'INICIO', allowedRoles: ['super admin', 'operator'] }
       ]
     },
     {
       title: 'Ventas',
       items: [
-        { route: '/orders', icon: 'fa-dollar-sign', label: 'ÓRDENES', allowedRoles: ['super admin', 'operador'] },
-        { route: '/plates', icon: 'fa-car', label: 'PLACAS', allowedRoles: ['super admin', 'operador'] }
+        { route: '/orders', icon: 'fa-dollar-sign', label: 'ÓRDENES', allowedRoles: ['super admin', 'operator'] },
+        { route: '/plates', icon: 'fa-car', label: 'PLACAS', allowedRoles: ['super admin', 'operator'] }
       ]
     },
     {
       title: 'Gestión',
       items: [
         { route: '/products', icon: 'fa-store', label: 'CATÁLOGO', allowedRoles: ['super admin'] },
-        { route: '/expenses', icon: 'fa-receipt', label: 'GASTOS', allowedRoles: ['super admin', 'operador'] },
+        { route: '/expenses', icon: 'fa-receipt', label: 'GASTOS', allowedRoles: ['super admin', 'operator'] },
         { route: '/employees', icon: 'fa-users', label: 'EMPLEADOS', allowedRoles: ['super admin'] },
-        { route: '/customers', icon: 'fa-address-book', label: 'CLIENTES', allowedRoles: ['super admin', 'operador'] }
+        { route: '/customers', icon: 'fa-address-book', label: 'CLIENTES', allowedRoles: ['super admin', 'operator'] }
       ]
     }
   ];

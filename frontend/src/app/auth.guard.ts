@@ -7,7 +7,7 @@ import { AuthService } from './auth/auth.service';
 })
 export class AuthGuard implements CanActivate {
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(private authService: AuthService, private router: Router) { }
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
     const user = this.authService.getCurrentUser();
@@ -21,10 +21,18 @@ export class AuthGuard implements CanActivate {
     const expectedRoles: string[] = route.data['expectedRoles'];
     const userRole = typeof user.rol === 'string' ? user.rol : user.rol?.nombre;
 
-    if (expectedRoles && !expectedRoles.includes(userRole)) {
-      console.error(`🚫 Acceso denegado: Se esperaba uno de [${expectedRoles.join(', ')}], pero el usuario tiene ${userRole}`);
-      this.router.navigate(['/login']);
-      return false;
+    console.log(`🔹 AuthGuard - Usuario: ${userRole}, Roles esperados: ${expectedRoles?.join(', ')}`);
+
+    if (expectedRoles && expectedRoles.length > 0) {
+      // Normalizar a minúsculas para comparación case-insensitive
+      const normalizedUserRole = userRole?.toLowerCase();
+      const normalizedExpectedRoles = expectedRoles.map(r => r.toLowerCase());
+
+      if (!normalizedExpectedRoles.includes(normalizedUserRole)) {
+        console.error(`🚫 Acceso denegado: Se esperaba uno de [${expectedRoles.join(', ')}], pero el usuario tiene ${userRole}`);
+        this.router.navigate(['/login']);
+        return false;
+      }
     }
 
     return true;

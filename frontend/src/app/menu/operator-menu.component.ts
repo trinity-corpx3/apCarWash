@@ -30,8 +30,8 @@ export class OperatorMenuComponent {
         this.router.navigate(['/admin-menu']);
         break;
       case 3:
-        // Operador va a orders donde tiene acceso al sidebar
-        this.router.navigate(['/orders']);
+        // Operador va directamente al POS
+        this.router.navigate(['/pos']);
         break;
       default:
         this.router.navigate(['/login']);

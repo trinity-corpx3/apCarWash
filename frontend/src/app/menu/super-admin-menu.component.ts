@@ -34,7 +34,7 @@ export class SuperAdminMenuComponent implements OnInit {
           this.router.navigate(['/admin-menu']);
           break;
         case 'Operator':
-          this.router.navigate(['/orders']);
+          this.router.navigate(['/pos']);
           break;
         case 'Director':
           this.router.navigate(['/director-orders']);

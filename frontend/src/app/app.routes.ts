@@ -14,15 +14,15 @@ import { PlatesComponent } from './plates/plates.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
-  { path: 'super-admin-menu', component: SuperAdminMenuComponent, canActivate: [AuthGuard], data: { expectedRoles: ['Super Admin'] } },
+  { path: 'super-admin-menu', component: SuperAdminMenuComponent, canActivate: [AuthGuard], data: { expectedRoles: ['Super Admin', 'Operador'] } },
   { path: 'admin-menu', component: AdminMenuComponent, canActivate: [AuthGuard], data: { expectedRoles: ['Admin'] } },
   { path: 'pos', component: PosComponent, canActivate: [AuthGuard], data: { expectedRoles: ['Super Admin', 'Operador'] } },
-  { path: 'orders', component: OrdersComponent, canActivate: [AuthGuard], data: { expectedRoles: ['Super Admin'] } },
-  { path: 'plates', component: PlatesComponent, canActivate: [AuthGuard], data: { expectedRoles: ['Super Admin'] } },
-  { path: 'expenses', component: ExpensesComponent, canActivate: [AuthGuard], data: { expectedRoles: ['Super Admin'] } },
+  { path: 'orders', component: OrdersComponent, canActivate: [AuthGuard], data: { expectedRoles: ['Super Admin', 'Operador'] } },
+  { path: 'plates', component: PlatesComponent, canActivate: [AuthGuard], data: { expectedRoles: ['Super Admin', 'Operador'] } },
+  { path: 'expenses', component: ExpensesComponent, canActivate: [AuthGuard], data: { expectedRoles: ['Super Admin', 'Operador'] } },
   { path: 'products', component: ProductsComponent, canActivate: [AuthGuard], data: { expectedRoles: ['Super Admin'] } },
   { path: 'employees', component: EmployeesComponent, canActivate: [AuthGuard], data: { expectedRoles: ['Super Admin'] } },
-  { path: 'customers', component: CustomersComponent, canActivate: [AuthGuard], data: { expectedRoles: ['Super Admin'] } },
+  { path: 'customers', component: CustomersComponent, canActivate: [AuthGuard], data: { expectedRoles: ['Super Admin', 'Operador'] } },
   { path: 'director-orders', component: DirectorOrdersComponent, canActivate: [AuthGuard], data: { expectedRoles: ['Director'] } },
 
   { path: '', redirectTo: '/login', pathMatch: 'full' },

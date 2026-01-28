@@ -6,41 +6,45 @@ import { AuthService } from '../auth/auth.service';
   providedIn: 'root',
 })
 export class AuthGuard implements CanActivate {
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(private authService: AuthService, private router: Router) { }
 
   canActivate(route: ActivatedRouteSnapshot): boolean {
-    const expectedRole = route.data['expectedRole'];
-  
+    const expectedRoles = route.data['expectedRoles'] as string[] | undefined;
+
     if (!this.authService.isLoggedIn()) {
       this.router.navigate(['/login']);
       return false;
     }
-  
+
     // Obtiene el usuario autenticado
     const user = this.authService.getCurrentUser();
     const userRole = user?.rol?.trim().toLowerCase(); // Elimina espacios extra y pasa a minúsculas
-  
-    console.log(`🔹 Verificando acceso: Rol del usuario -> ${userRole}, Rol esperado -> ${expectedRole}`);
-  
-    // ✅ Permitir acceso al POS si el usuario es "Operador" o "Super Admin"
-    if (route.routeConfig?.path?.includes('pos') && (userRole === 'operador' || userRole === 'super admin')) {
-      console.log('✅ Acceso permitido al POS');
+
+    console.log(`🔹 Verificando acceso: Rol del usuario -> ${userRole}, Roles esperados -> ${expectedRoles?.join(', ')}`);
+
+    // Si no hay roles esperados, permitir acceso
+    if (!expectedRoles || expectedRoles.length === 0) {
+      console.log('✅ Acceso permitido (sin restricciones de rol)');
       return true;
     }
-  
-    // 🔴 Validación estándar para otras rutas
-    if (expectedRole && userRole !== expectedRole.toLowerCase()) {
-      console.warn(`🚫 Acceso denegado: Se esperaba ${expectedRole}, pero el usuario tiene ${userRole}`);
-      this.router.navigate(['/unauthorized']);
-      return false;
+
+    // Verificar si el rol del usuario está en la lista de roles permitidos
+    const hasAccess = expectedRoles.some(role => role.toLowerCase() === userRole);
+
+    if (hasAccess) {
+      console.log(`✅ Acceso permitido: ${userRole} está autorizado`);
+      return true;
     }
-  
-    return true;
+
+    // Acceso denegado
+    console.warn(`🚫 Acceso denegado: Se esperaba uno de [${expectedRoles.join(', ')}], pero el usuario tiene ${userRole}`);
+    this.router.navigate(['/unauthorized']);
+    return false;
   }
-  
-  
-  
-  
+
+
+
+
 
   private redirectUser(role: string, sucursalId: any): void {
     switch (role) {

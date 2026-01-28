@@ -6,15 +6,10 @@
 
   <!-- Navegación por secciones -->
   <nav class="sidebar-nav">
-    <div *ngFor="let section of navSections" class="nav-section">
+    <div *ngFor="let section of getFilteredSections()" class="nav-section">
       <div class="section-title" *ngIf="!isCollapsed">{{ section.title }}</div>
-      <a
-        *ngFor="let item of section.items"
-        [routerLink]="[item.route]"
-        class="nav-link"
-        [class.active]="isActive(item.route)"
-        [title]="isCollapsed ? item.label : ''"
-      >
+      <a *ngFor="let item of section.items" [routerLink]="[item.route]" class="nav-link"
+        [class.active]="isActive(item.route)" [title]="isCollapsed ? item.label : ''">
         <i class="fas" [ngClass]="item.icon"></i>
         <span *ngIf="!isCollapsed">{{ item.label }}</span>
       </a>
@@ -32,4 +27,3 @@
     </div>
   </div>
 </div>
-

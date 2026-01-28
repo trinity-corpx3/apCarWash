@@ -14,28 +14,28 @@ export class SidebarComponent {
   showUserDropdown = false;
   isCollapsed = false;
 
-  // Estructura de navegación agrupada
+  // Estructura de navegación agrupada con control de roles
   navSections = [
     {
       title: 'Principal',
       items: [
-        { route: '/super-admin-menu', icon: 'fa-home', label: 'INICIO' }
+        { route: '/super-admin-menu', icon: 'fa-home', label: 'INICIO', allowedRoles: ['super admin', 'operador'] }
       ]
     },
     {
       title: 'Ventas',
       items: [
-        { route: '/orders', icon: 'fa-dollar-sign', label: 'ÓRDENES' },
-        { route: '/plates', icon: 'fa-car', label: 'PLACAS' }
+        { route: '/orders', icon: 'fa-dollar-sign', label: 'ÓRDENES', allowedRoles: ['super admin', 'operador'] },
+        { route: '/plates', icon: 'fa-car', label: 'PLACAS', allowedRoles: ['super admin', 'operador'] }
       ]
     },
     {
       title: 'Gestión',
       items: [
-        { route: '/products', icon: 'fa-store', label: 'CATÁLOGO' },
-        { route: '/expenses', icon: 'fa-receipt', label: 'GASTOS' },
-        { route: '/employees', icon: 'fa-users', label: 'EMPLEADOS' },
-        { route: '/customers', icon: 'fa-address-book', label: 'CLIENTES' }
+        { route: '/products', icon: 'fa-store', label: 'CATÁLOGO', allowedRoles: ['super admin'] },
+        { route: '/expenses', icon: 'fa-receipt', label: 'GASTOS', allowedRoles: ['super admin', 'operador'] },
+        { route: '/employees', icon: 'fa-users', label: 'EMPLEADOS', allowedRoles: ['super admin'] },
+        { route: '/customers', icon: 'fa-address-book', label: 'CLIENTES', allowedRoles: ['super admin', 'operador'] }
       ]
     }
   ];
@@ -44,6 +44,19 @@ export class SidebarComponent {
     public router: Router,
     private authService: AuthService
   ) { }
+
+  // Método para obtener secciones filtradas según el rol del usuario
+  getFilteredSections() {
+    const user = this.authService.getCurrentUser();
+    const userRole = user?.rol?.trim().toLowerCase();
+
+    return this.navSections.map(section => ({
+      ...section,
+      items: section.items.filter(item =>
+        item.allowedRoles?.includes(userRole || '')
+      )
+    })).filter(section => section.items.length > 0); // Eliminar secciones vacías
+  }
 
   toggleUserDropdown(event: Event): void {
     event.preventDefault();

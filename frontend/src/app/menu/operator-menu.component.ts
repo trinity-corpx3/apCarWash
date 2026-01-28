@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';  // Importa el servicio Router
-import { CommonModule } from '@angular/common'; 
+import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { AuthService } from '../auth/auth.service'; 
+import { AuthService } from '../auth/auth.service';
 
 @Component({
   selector: 'app-operator-menu',
@@ -15,9 +15,9 @@ export class OperatorMenuComponent {
   private currentUser: string = '';
   role: any;
 
-  constructor(private authService: AuthService, private router: Router) {}  // Inyecta el Router
+  constructor(private authService: AuthService, private router: Router) { }  // Inyecta el Router
   ngOnInit() {
-    
+
     this.currentUser = this.authService.getCurrentUser();
     this.role = this.authService.getRoles();
     console.log(this.role);
@@ -30,7 +30,8 @@ export class OperatorMenuComponent {
         this.router.navigate(['/admin-menu']);
         break;
       case 3:
-        this.router.navigate(['/pos']);
+        // Operador ahora va al menú principal donde verá solo sus opciones permitidas
+        this.router.navigate(['/super-admin-menu']);
         break;
       default:
         this.router.navigate(['/login']);
@@ -40,5 +41,5 @@ export class OperatorMenuComponent {
     console.log('Redirigiendo a POS...');
     this.router.navigate(['/pos']);
   }
-  
+
 }

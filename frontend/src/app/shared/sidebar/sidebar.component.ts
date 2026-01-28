@@ -19,7 +19,7 @@ export class SidebarComponent {
     {
       title: 'Principal',
       items: [
-        { route: '/super-admin-menu', icon: 'fa-home', label: 'INICIO', allowedRoles: ['super admin', 'operator'] }
+        { route: '/pos', icon: 'fa-cash-register', label: 'POS', allowedRoles: ['super admin', 'operator'] }
       ]
     },
     {

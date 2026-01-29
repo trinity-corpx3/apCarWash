@@ -312,13 +312,24 @@
                 <div>${{ calculateTotal() | number:'1.2-2' }}</div>
               </div>
 
-              <div *ngIf="calculateHighestPackageDiscount() > 0"
+              <!-- 6th visit discount (10%) -->
+              <div *ngIf="calculateLoyaltyDiscounts().sixth > 0"
                 class="d-flex justify-content-between mb-2 text-success">
-                <div><small>Descuento Lealtad (6ta visita)</small></div>
-                <div><small>-${{ calculateHighestPackageDiscount() | number:'1.2-2' }}</small></div>
+                <div><small>🎊 Descuento 6ta Visita (10%)</small></div>
+                <div><small>-${{ calculateLoyaltyDiscounts().sixth | number:'1.2-2' }}</small></div>
               </div>
 
-              <div *ngIf="descuentoSeleccionado" class="d-flex justify-content-between mb-2 text-success">
+              <!-- 7th visit discount (100% GRATIS) -->
+              <div *ngIf="calculateLoyaltyDiscounts().seventh > 0"
+                class="d-flex justify-content-between mb-2 text-success">
+                <div><small>🎉 Descuento 7ma Visita (GRATIS)</small></div>
+                <div><small>-${{ calculateLoyaltyDiscounts().seventh | number:'1.2-2' }}</small></div>
+              </div>
+
+              <!-- Promotional discount (only if no loyalty discount) -->
+              <div
+                *ngIf="descuentoSeleccionado && (calculateLoyaltyDiscounts().sixth + calculateLoyaltyDiscounts().seventh) === 0"
+                class="d-flex justify-content-between mb-2 text-success">
                 <div><small>{{ descuentoSeleccionado.nombre }}</small></div>
                 <div><small>-${{ calcularDescuentoPromocional() | number:'1.2-2' }}</small></div>
               </div>

@@ -420,10 +420,16 @@ export class PosComponent implements OnInit {
 
   calcularTotalConDescuentos(): number {
     const subtotal = this.calculateTotal();
-    const descuentoLealtad = this.calculateHighestPackageDiscount();
-    const descuentoPromocional = this.calcularDescuentoPromocional();
 
-    return subtotal - descuentoLealtad - descuentoPromocional;
+    // Calculate loyalty discounts (6th and 7th visit)
+    const loyaltyDiscounts = this.calculateLoyaltyDiscounts();
+    const totalLoyaltyDiscount = loyaltyDiscounts.sixth + loyaltyDiscounts.seventh;
+
+    // Loyalty discounts have priority over promotional discounts
+    // If there's a loyalty discount, don't apply promotional discount
+    const descuentoPromocional = totalLoyaltyDiscount > 0 ? 0 : this.calcularDescuentoPromocional();
+
+    return subtotal - totalLoyaltyDiscount - descuentoPromocional;
   }
 
 
@@ -757,6 +763,22 @@ export class PosComponent implements OnInit {
     doc.line(5, yPosition, 53, yPosition); // Línea horizontal
     yPosition += lineHeight;
 
+    // Cycle information header (if plate exists)
+    if (this.placa && this.plateQuickInfo) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.text(`Placa: ${this.placa}`, 5, yPosition);
+      yPosition += lineHeight;
+      const cyclesCompleted = Math.floor((this.plateQuickInfo.totalVisits || 0) / 7);
+      doc.text(`Ciclo: Visita ${this.plateQuickInfo.nextInCycle}/7`, 5, yPosition);
+      yPosition += lineHeight;
+      doc.text(`Ciclos completados: ${cyclesCompleted}`, 5, yPosition);
+      yPosition += lineHeight;
+      doc.line(5, yPosition, 53, yPosition);
+      yPosition += lineHeight;
+      doc.setFontSize(10);
+    }
+
     // Detalle de productos
     doc.setFont('helvetica', 'bold');
     doc.text('DETALLE DE PRODUCTOS:', 5, yPosition);
@@ -775,15 +797,25 @@ export class PosComponent implements OnInit {
     doc.line(5, yPosition, 53, yPosition); // Línea horizontal final
     yPosition += lineHeight;
 
-    // Total general
+    // Discounts section
     doc.setFont('helvetica', 'bold');
-    if (this.descuentoAplicado && this.descuentoAplicado > 0) {
-      doc.text(`Descuento 6ª visita: -$${this.descuentoAplicado.toFixed(2)}`, 5, yPosition);
+    const loyaltyDiscounts = this.calculateLoyaltyDiscounts();
+    const totalLoyaltyDiscount = loyaltyDiscounts.sixth + loyaltyDiscounts.seventh;
+
+    // 6th visit discount (10%)
+    if (loyaltyDiscounts.sixth > 0) {
+      doc.text(`Desc. 6ta (10%): -$${loyaltyDiscounts.sixth.toFixed(2)}`, 5, yPosition);
       yPosition += lineHeight;
     }
 
-    // Descuento promocional
-    if (this.descuentoSeleccionado && this.calcularDescuentoPromocional() > 0) {
+    // 7th visit discount (100% - GRATIS)
+    if (loyaltyDiscounts.seventh > 0) {
+      doc.text(`Desc. 7ma (GRATIS): -$${loyaltyDiscounts.seventh.toFixed(2)}`, 5, yPosition);
+      yPosition += lineHeight;
+    }
+
+    // Promotional discount (only if NO loyalty discount)
+    if (totalLoyaltyDiscount === 0 && this.descuentoSeleccionado && this.calcularDescuentoPromocional() > 0) {
       const nombreDescuento = this.descuentoSeleccionado.nombre;
       const montoDescuento = this.calcularDescuentoPromocional();
       doc.text(`${nombreDescuento}: -$${montoDescuento.toFixed(2)}`, 5, yPosition);
@@ -894,19 +926,41 @@ export class PosComponent implements OnInit {
 
 
 
-  calculateHighestPackageDiscount(): number {
-    // Verificar si la placa es elegible para descuento usando el sistema de lealtad
-    if (this.plateQuickInfo && this.plateQuickInfo.eligibleForDiscount && this.cart.length > 0) {
-      // Encuentra el producto con el precio más alto en el carrito
-      const highestPricedItem = this.cart.reduce((prev, current) => {
-        return current.precio > prev.precio ? current : prev;
-      }, this.cart[0]);
-
-      // Si hay un producto, retorna su precio como descuento
-      return highestPricedItem ? highestPricedItem.precio : 0;
+  /**
+   * Calculate loyalty discounts for 6th visit (10%) and 7th visit (100%)
+   * Returns object with both discount amounts
+   * NOTE: 7th visit discount only applies to SERVICES (categoría ID=1), not products
+   */
+  calculateLoyaltyDiscounts(): { sixth: number, seventh: number } {
+    if (!this.plateQuickInfo || this.cart.length === 0) {
+      return { sixth: 0, seventh: 0 };
     }
-    // Si no aplica descuento, retorna 0
-    return 0;
+
+    const subtotal = this.calculateTotal();
+
+    // 7th visit: 100% discount on highest priced SERVICE (categoría ID=1) - GRATIS
+    if (this.plateQuickInfo.eligibleForFullDiscount) {
+      // Filter only services (categoría ID=1)
+      const services = this.cart.filter(item => item.categoria?.id === 1);
+
+      if (services.length === 0) {
+        // No services in cart, no discount
+        return { sixth: 0, seventh: 0 };
+      }
+
+      // Find highest priced service
+      const highestPricedService = services.reduce((prev, current) =>
+        current.precio > prev.precio ? current : prev, services[0]);
+
+      return { sixth: 0, seventh: highestPricedService.precio };
+    }
+
+    // 6th visit: 10% discount on subtotal (applies to all items)
+    if (this.plateQuickInfo.eligibleForPartialDiscount) {
+      return { sixth: subtotal * 0.10, seventh: 0 };
+    }
+
+    return { sixth: 0, seventh: 0 };
   }
 
 
@@ -1496,48 +1550,90 @@ export class PosComponent implements OnInit {
 
 
   finalizarVentaConFactura(factura: boolean) {
-    // Verificar si esta venta completará el ciclo de 6 visitas (eligibleForDiscount O nextInCycle == 6)
-    const willCompleteDiscount = this.plateQuickInfo && this.placa && this.placa.trim() !== '' &&
-      (this.plateQuickInfo.eligibleForDiscount || this.plateQuickInfo.nextInCycle === 6);
+    // Check for 7th visit (100% discount - GRATIS)
+    const is7thVisit = this.plateQuickInfo && this.placa && this.placa.trim() !== '' &&
+      (this.plateQuickInfo.eligibleForFullDiscount || this.plateQuickInfo.nextInCycle === 7);
 
-    if (willCompleteDiscount) {
-      // Mostrar pop-up de confirmación antes de proceder
+    // Check for 6th visit (10% discount)
+    const is6thVisit = !is7thVisit && this.plateQuickInfo && this.placa && this.placa.trim() !== '' &&
+      (this.plateQuickInfo.eligibleForPartialDiscount || this.plateQuickInfo.nextInCycle === 6);
+
+    if (is7thVisit) {
+      // 7th visit alert - 100% discount (GRATIS)
+      const cyclesCompleted = Math.floor((this.plateQuickInfo.totalVisits || 0) / 7);
       Swal.fire({
-        title: '🎉 ¡Descuento de 6ta Visita!',
+        title: '🎉 ¡7ma Visita - GRATIS!',
         html: `
-        <div style="text-align: left; padding: 10px;">
+        <div style="text-align: left; padding: 15px;">
           <p style="font-size: 16px; margin-bottom: 15px;">
-            <strong>La placa ${this.placa}</strong> ${this.plateQuickInfo.eligibleForDiscount ? 'es elegible' : 'completará el ciclo'} para descuento de 6ta visita.
+            <strong>Placa: ${this.placa}</strong>
           </p>
-          <p style="font-size: 14px; margin-bottom: 10px;">
-            <i class="fas fa-check-circle" style="color: #28a745;"></i> 
-            Visitas actuales: <strong>${this.plateQuickInfo.totalVisits}</strong> → Esta será la visita <strong>${this.plateQuickInfo.nextInCycle}</strong>
+          <p style="font-size: 14px; color: #666; margin-bottom: 10px;">
+            📊 Ciclo: <strong>Visita ${this.plateQuickInfo.nextInCycle}/7</strong>
           </p>
-          <p style="font-size: 14px; margin-bottom: 15px;">
-            <i class="fas fa-gift" style="color: #ff6b6b;"></i> 
-            Se aplicará descuento del <strong>100%</strong> sobre el producto de mayor valor
+          <p style="font-size: 14px; color: #666; margin-bottom: 15px;">
+            🏆 Ciclos completados: <strong>${cyclesCompleted}</strong>
           </p>
-          <hr>
-          <p style="font-size: 13px; color: #666;">
-            Presione OK para continuar con la venta y aplicar el descuento.
+          <hr style="margin: 15px 0; border-top: 2px solid #28a745;">
+          <p style="font-size: 15px; color: #28a745; font-weight: bold; margin-bottom: 10px;">
+            ✅ Se aplicará descuento del 100% en el servicio más caro
+          </p>
+          <p style="font-size: 13px; color: #999;">
+            🔄 El ciclo se reiniciará después de esta venta
           </p>
         </div>
-      `,
+        `,
         icon: 'success',
-        confirmButtonText: 'OK, Continuar',
+        confirmButtonText: 'Continuar',
         confirmButtonColor: '#28a745',
         allowOutsideClick: false,
         width: '500px'
       }).then((result) => {
         if (result.isConfirmed) {
-          // Proceder con la venta después de confirmar
+          this.finishSale();
+          this.totalAmount = this.calculateTotal();
+          this.showSaleCompletedPopup = true;
+        }
+      });
+    } else if (is6thVisit) {
+      // 6th visit alert - 10% discount
+      const cyclesCompleted = Math.floor((this.plateQuickInfo.totalVisits || 0) / 7);
+      Swal.fire({
+        title: '🎊 ¡6ta Visita - 10% Descuento!',
+        html: `
+        <div style="text-align: left; padding: 15px;">
+          <p style="font-size: 16px; margin-bottom: 15px;">
+            <strong>Placa: ${this.placa}</strong>
+          </p>
+          <p style="font-size: 14px; color: #666; margin-bottom: 10px;">
+            📊 Ciclo: <strong>Visita ${this.plateQuickInfo.nextInCycle}/7</strong>
+          </p>
+          <p style="font-size: 14px; color: #666; margin-bottom: 15px;">
+            🏆 Ciclos completados: <strong>${cyclesCompleted}</strong>
+          </p>
+          <hr style="margin: 15px 0; border-top: 2px solid #17a2b8;">
+          <p style="font-size: 15px; color: #17a2b8; font-weight: bold; margin-bottom: 10px;">
+            ✅ Se aplicará descuento del 10% en el total
+          </p>
+          <p style="font-size: 13px; color: #28a745; background: #d4edda; padding: 8px; border-radius: 4px;">
+            💡 En la próxima visita (7ma) obtendrá el servicio <strong>GRATIS</strong>
+          </p>
+        </div>
+        `,
+        icon: 'info',
+        confirmButtonText: 'Continuar',
+        confirmButtonColor: '#17a2b8',
+        allowOutsideClick: false,
+        width: '500px'
+      }).then((result) => {
+        if (result.isConfirmed) {
           this.finishSale();
           this.totalAmount = this.calculateTotal();
           this.showSaleCompletedPopup = true;
         }
       });
     } else {
-      // No hay descuento, proceder normalmente
+      // No loyalty discount, proceed normally
       this.finishSale();
       this.totalAmount = this.calculateTotal();
       this.showSaleCompletedPopup = true;

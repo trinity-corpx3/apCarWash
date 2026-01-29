@@ -24,8 +24,8 @@ public class PlatesController {
     private final PlateLoyaltyCounterRepository counterRepository;
 
     public PlatesController(PlateService plateService, LoyaltyService loyaltyService,
-                           OrdenCompraService ordenCompraService, PlateRepository plateRepository,
-                           PlateLoyaltyCounterRepository counterRepository) {
+            OrdenCompraService ordenCompraService, PlateRepository plateRepository,
+            PlateLoyaltyCounterRepository counterRepository) {
         this.plateService = plateService;
         this.loyaltyService = loyaltyService;
         this.ordenCompraService = ordenCompraService;
@@ -47,28 +47,32 @@ public class PlatesController {
     public ResponseEntity<?> getQuickInfo(@PathVariable String plate, @RequestParam(required = false) Long sucursalId) {
         var summary = loyaltyService.getSummary(plate, sucursalId != null ? sucursalId : 1L);
         var stats = ordenCompraService.getEstadisticasPlaca(plate);
-        
-        // Calcular próxima visita con descuento (6ta visita)
+
+        // Calcular próxima visita con descuento
         int visits = summary.visitsPaid();
         int nextInCycle = summary.nextInCycle();
-        boolean eligible = summary.eligible();
-        
+        boolean eligibleFull = summary.eligibleForFullDiscount(); // 7th visit - 100%
+        boolean eligiblePartial = summary.eligibleForPartialDiscount(); // 6th visit - 10%
+
         // Obtener ciclos completados sumando de todas las sucursales
         var counters = counterRepository.findByIdPlate(plate);
         int totalCycles = counters.stream()
                 .mapToInt(c -> c.getCycleCount() != null ? c.getCycleCount() : 0)
                 .sum();
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("plate", plate);
         response.put("totalVisits", visits);
         response.put("nextInCycle", nextInCycle);
-        response.put("eligibleForDiscount", eligible);
-        response.put("visitsUntilDiscount", eligible ? 0 : (6 - nextInCycle));
+        response.put("eligibleForFullDiscount", eligibleFull); // 7th visit - 100%
+        response.put("eligibleForPartialDiscount", eligiblePartial); // 6th visit - 10%
+        response.put("eligibleForDiscount", eligibleFull); // Backward compatibility
+        response.put("visitsUntilFullDiscount", eligibleFull ? 0 : (7 - nextInCycle));
+        response.put("visitsUntilPartialDiscount", (eligibleFull || eligiblePartial) ? 0 : (6 - nextInCycle));
         response.put("totalTickets", stats.get("totalTickets"));
         response.put("lastVisitAt", summary.lastVisitAt());
         response.put("cyclesCompleted", totalCycles);
-        
+
         return ResponseEntity.ok(response);
     }
 
@@ -81,25 +85,27 @@ public class PlatesController {
             @RequestParam(required = false) Long sucursalId,
             @RequestParam(required = false) String fechaInicio,
             @RequestParam(required = false) String fechaFin) {
-        
+
         // Obtener todas las placas únicas con filtros de fecha
         List<String> allPlates = ordenCompraService.findAllOrdenesCompra().stream()
                 .filter(o -> o.getPlaca() != null && !o.getPlaca().trim().isEmpty() && !o.getEstado().equals("anulado"))
-                .filter(o -> sucursalId == null || (o.getSucursal() != null && o.getSucursal().getId().equals(sucursalId)))
+                .filter(o -> sucursalId == null
+                        || (o.getSucursal() != null && o.getSucursal().getId().equals(sucursalId)))
                 .filter(o -> {
                     // Filtrar por rango de fechas si se proporcionan
                     if (fechaInicio != null || fechaFin != null) {
                         try {
                             java.time.LocalDateTime orderDate = o.getFecha();
-                            if (orderDate == null) return false;
-                            
+                            if (orderDate == null)
+                                return false;
+
                             if (fechaInicio != null) {
                                 java.time.LocalDate startDate = java.time.LocalDate.parse(fechaInicio);
                                 if (orderDate.toLocalDate().isBefore(startDate)) {
                                     return false;
                                 }
                             }
-                            
+
                             if (fechaFin != null) {
                                 java.time.LocalDate endDate = java.time.LocalDate.parse(fechaFin);
                                 if (orderDate.toLocalDate().isAfter(endDate)) {
@@ -138,14 +144,16 @@ public class PlatesController {
             var summary = loyaltyService.getSummary(plate, 1L);
             var stats = ordenCompraService.getEstadisticasPlaca(plate);
             var plateEntity = plateService.findByPlate(plate);
-            
+
             Map<String, Object> plateData = new HashMap<>();
             plateData.put("plate", plate);
             if (plateEntity.isPresent() && plateEntity.get().getCustomer() != null) {
                 Map<String, Object> customerData = new HashMap<>();
                 customerData.put("id", plateEntity.get().getCustomer().getId());
-                customerData.put("nombre", plateEntity.get().getCustomer().getNombreCompleto() != null ? 
-                    plateEntity.get().getCustomer().getNombreCompleto() : "");
+                customerData.put("nombre",
+                        plateEntity.get().getCustomer().getNombreCompleto() != null
+                                ? plateEntity.get().getCustomer().getNombreCompleto()
+                                : "");
                 plateData.put("customer", customerData);
             } else {
                 plateData.put("customer", null);
@@ -153,13 +161,15 @@ public class PlatesController {
             plateData.put("active", plateEntity.map(Plate::isActive).orElse(true));
             plateData.put("totalVisits", summary.visitsPaid());
             plateData.put("nextInCycle", summary.nextInCycle());
-            plateData.put("eligibleForDiscount", summary.eligible());
+            plateData.put("eligibleForFullDiscount", summary.eligibleForFullDiscount());
+            plateData.put("eligibleForPartialDiscount", summary.eligibleForPartialDiscount());
+            plateData.put("eligibleForDiscount", summary.eligibleForFullDiscount()); // Backward compatibility
             plateData.put("lastVisitAt", summary.lastVisitAt());
             plateData.put("totalTickets", stats.get("totalTickets"));
             plateData.put("totalGastado", stats.get("totalGastado"));
             plateData.put("totalDescuentos", stats.get("totalDescuentos"));
             plateData.put("descuentosAplicados", stats.get("descuentosAplicados"));
-            
+
             return plateData;
         }).collect(Collectors.toList());
 
@@ -181,11 +191,11 @@ public class PlatesController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String fechaInicio,
             @RequestParam(required = false) String fechaFin) {
-        
+
         var plateEntity = plateService.findByPlate(plate);
         var summary = loyaltyService.getSummary(plate, 1L);
         var stats = ordenCompraService.getEstadisticasPlaca(plate);
-        
+
         // Obtener órdenes con filtro de fechas
         List<OrdenCompra> orders;
         if (fechaInicio != null && fechaFin != null && !fechaInicio.isEmpty() && !fechaFin.isEmpty()) {
@@ -193,20 +203,20 @@ public class PlatesController {
         } else {
             orders = ordenCompraService.findByPlaca(plate);
         }
-        
+
         // Paginación manual
         int total = orders.size();
         int start = page * size;
         int end = Math.min(start + size, total);
         List<OrdenCompra> paginatedOrders = start < total ? orders.subList(start, end) : new ArrayList<>();
-        
+
         // Forzar carga de productos para cada orden (si no están cargados)
         paginatedOrders.forEach(order -> {
             if (order.getProductos() != null) {
                 order.getProductos().size(); // Forzar carga lazy
             }
         });
-        
+
         // Obtener contadores por sucursal
         var counters = counterRepository.findByIdPlate(plate);
         List<Map<String, Object>> countersData = counters.stream().map(c -> {
@@ -219,23 +229,24 @@ public class PlatesController {
             counterData.put("lastRedeemAt", c.getLastRedeemAt());
             return counterData;
         }).collect(Collectors.toList());
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("plate", plate);
         response.put("plateEntity", plateEntity.orElse(null));
         response.put("loyalty", Map.of(
                 "totalVisits", summary.visitsPaid(),
                 "nextInCycle", summary.nextInCycle(),
-                "eligibleForDiscount", summary.eligible(),
-                "lastVisitAt", summary.lastVisitAt()
-        ));
+                "eligibleForFullDiscount", summary.eligibleForFullDiscount(),
+                "eligibleForPartialDiscount", summary.eligibleForPartialDiscount(),
+                "eligibleForDiscount", summary.eligibleForFullDiscount(), // Backward compatibility
+                "lastVisitAt", summary.lastVisitAt()));
         response.put("stats", stats);
         response.put("counters", countersData);
         response.put("orders", paginatedOrders);
         response.put("ordersTotal", total);
         response.put("ordersPage", page);
         response.put("ordersTotalPages", (int) Math.ceil((double) total / size));
-        
+
         return ResponseEntity.ok(response);
     }
 

@@ -26,8 +26,13 @@
         <span>Hoy</span>
         <h3>${{ todayNetAmount | number:'1.2-2' }}</h3>
         <span>{{ todaySalesCount }} ventas</span>
-        <small class="text-muted d-block">Subtotal: ${{ todaySalesAmount | number:'1.2-2' }} · Descuentos 6ª: -${{
-          todayDiscountAmount | number:'1.2-2' }} ({{ todayDiscountCount }})</small>
+        <small class="text-muted d-block">Subtotal: ${{ todaySalesAmount | number:'1.2-2' }}</small>
+        <small class="text-muted d-block" *ngIf="todayDiscount6thCount > 0">
+          🎊 Desc. 6ta (10%): -${{ todayDiscount6thAmount | number:'1.2-2' }} ({{ todayDiscount6thCount }})
+        </small>
+        <small class="text-muted d-block" *ngIf="todayDiscount7thCount > 0">
+          🎉 Desc. 7ma (GRATIS): -${{ todayDiscount7thAmount | number:'1.2-2' }} ({{ todayDiscount7thCount }})
+        </small>
         <div class="actions">
           <button (click)="exportToCSV('today')" class="btn btn-sm btn-outline-success">Exportar CSV</button>
           <button (click)="generateTicket('today')" class="btn btn-sm btn-outline-primary">Generar Ticket</button>
@@ -38,8 +43,13 @@
         <span>Ayer</span>
         <h3>${{ yesterdayNetAmount | number:'1.2-2' }}</h3>
         <span>{{ yesterdaySalesCount }} ventas</span>
-        <small class="text-muted d-block">Subtotal: ${{ yesterdaySalesAmount | number:'1.2-2' }} · Descuentos 6ª: -${{
-          yesterdayDiscountAmount | number:'1.2-2' }} ({{ yesterdayDiscountCount }})</small>
+        <small class="text-muted d-block">Subtotal: ${{ yesterdaySalesAmount | number:'1.2-2' }}</small>
+        <small class="text-muted d-block" *ngIf="yesterdayDiscount6thCount > 0">
+          🎊 Desc. 6ta (10%): -${{ yesterdayDiscount6thAmount | number:'1.2-2' }} ({{ yesterdayDiscount6thCount }})
+        </small>
+        <small class="text-muted d-block" *ngIf="yesterdayDiscount7thCount > 0">
+          🎉 Desc. 7ma (GRATIS): -${{ yesterdayDiscount7thAmount | number:'1.2-2' }} ({{ yesterdayDiscount7thCount }})
+        </small>
         <div class="actions">
           <button (click)="exportToCSV('yesterday')" class="btn btn-sm btn-outline-success">Exportar CSV</button>
           <button (click)="generateTicket('yesterday')" class="btn btn-sm btn-outline-primary">Generar Ticket</button>
@@ -50,8 +60,13 @@
         <span>Esta Semana</span>
         <h3>${{ weekNetAmount | number:'1.2-2' }}</h3>
         <span>{{ weekSalesCount }} ventas</span>
-        <small class="text-muted d-block">Subtotal: ${{ weekSalesAmount | number:'1.2-2' }} · Descuentos 6ª: -${{
-          weekDiscountAmount | number:'1.2-2' }} ({{ weekDiscountCount }})</small>
+        <small class="text-muted d-block">Subtotal: ${{ weekSalesAmount | number:'1.2-2' }}</small>
+        <small class="text-muted d-block" *ngIf="weekDiscount6thCount > 0">
+          🎊 Desc. 6ta (10%): -${{ weekDiscount6thAmount | number:'1.2-2' }} ({{ weekDiscount6thCount }})
+        </small>
+        <small class="text-muted d-block" *ngIf="weekDiscount7thCount > 0">
+          🎉 Desc. 7ma (GRATIS): -${{ weekDiscount7thAmount | number:'1.2-2' }} ({{ weekDiscount7thCount }})
+        </small>
         <div class="actions">
           <button (click)="exportToCSV('week')" class="btn btn-sm btn-outline-success">Exportar CSV</button>
           <button (click)="generateTicket('week')" class="btn btn-sm btn-outline-primary">Generar Ticket</button>
@@ -62,8 +77,13 @@
         <span>{{ isHistoricalView ? getSelectedMonthName() + ' ' + selectedHistoricalYear : 'Este Mes' }}</span>
         <h3>${{ monthNetAmount | number:'1.2-2' }}</h3>
         <span>{{ monthSalesCount }} ventas</span>
-        <small class="text-muted d-block">Subtotal: ${{ monthSalesAmount | number:'1.2-2' }} · Descuentos 6ª: -${{
-          monthDiscountAmount | number:'1.2-2' }} ({{ monthDiscountCount }})</small>
+        <small class="text-muted d-block">Subtotal: ${{ monthSalesAmount | number:'1.2-2' }}</small>
+        <small class="text-muted d-block" *ngIf="monthDiscount6thCount > 0">
+          🎊 Desc. 6ta (10%): -${{ monthDiscount6thAmount | number:'1.2-2' }} ({{ monthDiscount6thCount }})
+        </small>
+        <small class="text-muted d-block" *ngIf="monthDiscount7thCount > 0">
+          🎉 Desc. 7ma (GRATIS): -${{ monthDiscount7thAmount | number:'1.2-2' }} ({{ monthDiscount7thCount }})
+        </small>
         <div class="actions">
           <button (click)="exportToCSV(isHistoricalView ? 'historical' : 'month')"
             class="btn btn-sm btn-outline-success">Exportar CSV</button>
@@ -193,11 +213,13 @@
               <td>{{ orden.id }}</td>
               <td>
                 {{ orden.numeroRecibo }}
-                <span *ngIf="orden.loyaltyApplied" class="badge bg-info ms-1"
-                  title="Descuento 6ª visita aplicado">6ª</span>
-                <span *ngIf="orden.descuentoPromocionalTipo === 'MIERCOLES_HOMBRES'" class="badge bg-success ms-1"
+                <span *ngIf="orden.descuento6taVisitaAplicado" class="badge bg-info ms-1"
+                  title="Descuento 6ª visita (10%) aplicado">🎊 6ta</span>
+                <span *ngIf="orden.descuento7maVisitaAplicado" class="badge bg-success ms-1"
+                  title="Descuento 7ª visita (100% GRATIS) aplicado">🎉 7ma</span>
+                <span *ngIf="orden.descuentoPromocionalTipo === 'MIERCOLES_HOMBRES'" class="badge bg-secondary ms-1"
                   title="Miércoles de Hombres (10%)">MH</span>
-                <span *ngIf="orden.descuentoPromocionalTipo === 'JUEVES_MUJERES'" class="badge bg-success ms-1"
+                <span *ngIf="orden.descuentoPromocionalTipo === 'JUEVES_MUJERES'" class="badge bg-secondary ms-1"
                   title="Jueves de Mujeres (10%)">JM</span>
                 <span *ngIf="orden.descuentoPromocionalTipo === 'TICKET_GASOLINA'" class="badge bg-warning ms-1"
                   title="Ticket de Gasolina (25%)">TG</span>
@@ -588,7 +610,7 @@
 </div>
 
 <script>
- t.addEventListener('DOMContentLoaded', function () {
+  t.addEventListener('DOMContentLoaded', function () {
     const customTicketModal = document.getElementById('customTicketModal');
     if (customTicketModal) {
       customTicketModal.addEventListener('hidden.bs.modal', function () {

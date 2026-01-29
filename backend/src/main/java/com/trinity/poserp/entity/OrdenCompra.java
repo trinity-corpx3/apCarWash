@@ -70,6 +70,19 @@ public class OrdenCompra {
     @Column(name = "ticket_gasolina_monto")
     private Double ticketGasolinaMonto; // Solo para TICKET_GASOLINA
 
+    // Campos para descuentos de lealtad - 6ta y 7ma visita
+    @Column(name = "descuento_6ta_visita_aplicado", nullable = false)
+    private Boolean descuento6taVisitaAplicado = false;
+
+    @Column(name = "descuento_6ta_visita_monto", precision = 10, scale = 2)
+    private Double descuento6taVisitaMonto = 0.0;
+
+    @Column(name = "descuento_7ma_visita_aplicado", nullable = false)
+    private Boolean descuento7maVisitaAplicado = false;
+
+    @Column(name = "descuento_7ma_visita_monto", precision = 10, scale = 2)
+    private Double descuento7maVisitaMonto = 0.0;
+
     public Double getCantidadRecibida() {
         return cantidadRecibida;
     }
@@ -265,6 +278,39 @@ public class OrdenCompra {
 
     public void setTicketGasolinaMonto(Double ticketGasolinaMonto) {
         this.ticketGasolinaMonto = ticketGasolinaMonto;
+    }
+
+    // Getters y setters para descuentos de lealtad
+    public Boolean getDescuento6taVisitaAplicado() {
+        return descuento6taVisitaAplicado;
+    }
+
+    public void setDescuento6taVisitaAplicado(Boolean descuento6taVisitaAplicado) {
+        this.descuento6taVisitaAplicado = descuento6taVisitaAplicado;
+    }
+
+    public Double getDescuento6taVisitaMonto() {
+        return descuento6taVisitaMonto;
+    }
+
+    public void setDescuento6taVisitaMonto(Double descuento6taVisitaMonto) {
+        this.descuento6taVisitaMonto = descuento6taVisitaMonto;
+    }
+
+    public Boolean getDescuento7maVisitaAplicado() {
+        return descuento7maVisitaAplicado;
+    }
+
+    public void setDescuento7maVisitaAplicado(Boolean descuento7maVisitaAplicado) {
+        this.descuento7maVisitaAplicado = descuento7maVisitaAplicado;
+    }
+
+    public Double getDescuento7maVisitaMonto() {
+        return descuento7maVisitaMonto;
+    }
+
+    public void setDescuento7maVisitaMonto(Double descuento7maVisitaMonto) {
+        this.descuento7maVisitaMonto = descuento7maVisitaMonto;
     }
 
 }

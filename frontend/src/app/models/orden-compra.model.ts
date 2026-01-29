@@ -23,6 +23,18 @@ export interface OrdenCompra {
     nombre: string;
     email: string;
   };
+
+  // Promotional discounts
+  descuentoPromocionalTipo?: string;
+  descuentoPromocionalPorcentaje?: number;
+  descuentoPromocionalMonto?: number;
+  ticketGasolinaMonto?: number;
+
+  // Loyalty discount tracking - 6th and 7th visit
+  descuento6taVisitaAplicado?: boolean;
+  descuento6taVisitaMonto?: number;
+  descuento7maVisitaAplicado?: boolean;
+  descuento7maVisitaMonto?: number;
 }
 
 export interface DatosFiscales {

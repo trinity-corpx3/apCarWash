@@ -154,7 +154,8 @@ public class OrdenCompraService {
         if (placaNorm != null) {
             try {
                 var summary = loyaltyService.getSummary(placaNorm, sucursal.getId());
-                if (summary.eligible()) {
+                // Only apply full discount (7th visit - 100%)
+                if (summary.eligibleForFullDiscount()) {
                     savedOrder.setLoyaltyApplied(true);
                     savedOrder.setLoyaltyDiscountAmount(java.math.BigDecimal.valueOf(highestPrice));
                     ordenCompraRepository.save(savedOrder);
@@ -282,51 +283,47 @@ public class OrdenCompraService {
     @Transactional
     public void updateFacturadaStatus(String numeroRecibo, boolean facturada) {
         System.out.println(String.format(
-            "🔄 updateFacturadaStatus llamado: numeroRecibo=%s, facturada=%s",
-            numeroRecibo, facturada
-        ));
-        
+                "🔄 updateFacturadaStatus llamado: numeroRecibo=%s, facturada=%s",
+                numeroRecibo, facturada));
+
         OrdenCompra ordenCompra = ordenCompraRepository.findByNumeroRecibo(numeroRecibo)
                 .orElseThrow(() -> {
                     System.err.println(String.format(
-                        "❌ ERROR: Orden no encontrada con numeroRecibo: %s",
-                        numeroRecibo
-                    ));
+                            "❌ ERROR: Orden no encontrada con numeroRecibo: %s",
+                            numeroRecibo));
                     return new RuntimeException("Orden no encontrada con numeroRecibo: " + numeroRecibo);
                 });
-        
+
         boolean estabaFacturada = ordenCompra.isFacturada();
-        
+
         System.out.println(String.format(
-            "✅ Orden encontrada - ID: %d, Sucursal: %d, Fecha: %s, Actualmente facturada: %s -> Nuevo estado: %s",
-            ordenCompra.getId(),
-            ordenCompra.getSucursal() != null ? ordenCompra.getSucursal().getId() : null,
-            ordenCompra.getFecha(),
-            estabaFacturada,
-            facturada
-        ));
-        
+                "✅ Orden encontrada - ID: %d, Sucursal: %d, Fecha: %s, Actualmente facturada: %s -> Nuevo estado: %s",
+                ordenCompra.getId(),
+                ordenCompra.getSucursal() != null ? ordenCompra.getSucursal().getId() : null,
+                ordenCompra.getFecha(),
+                estabaFacturada,
+                facturada));
+
         ordenCompra.setFacturada(facturada);
-        
-        // Si la orden pasa de no facturada a facturada, establecer la fecha de facturación
+
+        // Si la orden pasa de no facturada a facturada, establecer la fecha de
+        // facturación
         if (!estabaFacturada && facturada) {
             ordenCompra.setFechaFacturacion(java.time.LocalDateTime.now());
             System.out.println(String.format(
-                "📅 Fecha de facturación establecida: %s",
-                ordenCompra.getFechaFacturacion()
-            ));
+                    "📅 Fecha de facturación establecida: %s",
+                    ordenCompra.getFechaFacturacion()));
         } else if (estabaFacturada && !facturada) {
             // Si se desmarca como facturada, limpiar la fecha de facturación
             ordenCompra.setFechaFacturacion(null);
             System.out.println("🗑️ Fecha de facturación eliminada (orden desmarcada como facturada)");
         }
-        
+
         ordenCompraRepository.save(ordenCompra);
-        
+
         System.out.println(String.format(
-            "✅ Orden guardada exitosamente con facturada=%s, fechaFacturacion=%s",
-            facturada, ordenCompra.getFechaFacturacion()
-        ));
+                "✅ Orden guardada exitosamente con facturada=%s, fechaFacturacion=%s",
+                facturada, ordenCompra.getFechaFacturacion()));
     }
 
     public Integer countFacturasEmitidas() {

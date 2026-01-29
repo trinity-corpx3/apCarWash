@@ -74,6 +74,26 @@ export class OrdersComponent implements OnInit {
   monthDiscountAmount: number = 0;
   monthDiscountCount: number = 0;
 
+  // Descuentos 6ta visita (10%) - NEW
+  todayDiscount6thAmount: number = 0;
+  todayDiscount6thCount: number = 0;
+  yesterdayDiscount6thAmount: number = 0;
+  yesterdayDiscount6thCount: number = 0;
+  weekDiscount6thAmount: number = 0;
+  weekDiscount6thCount: number = 0;
+  monthDiscount6thAmount: number = 0;
+  monthDiscount6thCount: number = 0;
+
+  // Descuentos 7ma visita (100%) - NEW
+  todayDiscount7thAmount: number = 0;
+  todayDiscount7thCount: number = 0;
+  yesterdayDiscount7thAmount: number = 0;
+  yesterdayDiscount7thCount: number = 0;
+  weekDiscount7thAmount: number = 0;
+  weekDiscount7thCount: number = 0;
+  monthDiscount7thAmount: number = 0;
+  monthDiscount7thCount: number = 0;
+
   // Totales netos
   todayNetAmount: number = 0;
   yesterdayNetAmount: number = 0;
@@ -812,11 +832,21 @@ export class OrdersComponent implements OnInit {
     this.weekSalesAmount = 0;
     this.monthSalesCount = 0;
     this.monthSalesAmount = 0;
-    // Descuentos 6ª
+    // Descuentos (legacy)
     this.todayDiscountAmount = 0; this.todayDiscountCount = 0;
     this.yesterdayDiscountAmount = 0; this.yesterdayDiscountCount = 0;
     this.weekDiscountAmount = 0; this.weekDiscountCount = 0;
     this.monthDiscountAmount = 0; this.monthDiscountCount = 0;
+    // Descuentos 6ta visita (10%)
+    this.todayDiscount6thAmount = 0; this.todayDiscount6thCount = 0;
+    this.yesterdayDiscount6thAmount = 0; this.yesterdayDiscount6thCount = 0;
+    this.weekDiscount6thAmount = 0; this.weekDiscount6thCount = 0;
+    this.monthDiscount6thAmount = 0; this.monthDiscount6thCount = 0;
+    // Descuentos 7ma visita (100%)
+    this.todayDiscount7thAmount = 0; this.todayDiscount7thCount = 0;
+    this.yesterdayDiscount7thAmount = 0; this.yesterdayDiscount7thCount = 0;
+    this.weekDiscount7thAmount = 0; this.weekDiscount7thCount = 0;
+    this.monthDiscount7thAmount = 0; this.monthDiscount7thCount = 0;
 
     // Procesar las órdenes y calcular el resumen
     this.ordenes.forEach(order => {
@@ -832,6 +862,18 @@ export class OrdersComponent implements OnInit {
       if (orderDate.isSame(today, 'day')) {
         this.todaySalesCount++;
         this.todaySalesAmount += orderTotal;
+        // Track loyalty discounts separately
+        if (order.descuento6taVisitaAplicado) {
+          const disc6th = Number(order.descuento6taVisitaMonto || 0);
+          this.todayDiscount6thAmount += disc6th;
+          if (disc6th > 0) this.todayDiscount6thCount++;
+        }
+        if (order.descuento7maVisitaAplicado) {
+          const disc7th = Number(order.descuento7maVisitaMonto || 0);
+          this.todayDiscount7thAmount += disc7th;
+          if (disc7th > 0) this.todayDiscount7thCount++;
+        }
+        // Legacy tracking
         if (order.loyaltyApplied) {
           const disc = Number(order.loyaltyDiscountAmount || 0);
           this.todayDiscountAmount += disc;
@@ -843,6 +885,18 @@ export class OrdersComponent implements OnInit {
       if (orderDate.isSame(yesterday, 'day')) {
         this.yesterdaySalesCount++;
         this.yesterdaySalesAmount += orderTotal;
+        // Track loyalty discounts separately
+        if (order.descuento6taVisitaAplicado) {
+          const disc6th = Number(order.descuento6taVisitaMonto || 0);
+          this.yesterdayDiscount6thAmount += disc6th;
+          if (disc6th > 0) this.yesterdayDiscount6thCount++;
+        }
+        if (order.descuento7maVisitaAplicado) {
+          const disc7th = Number(order.descuento7maVisitaMonto || 0);
+          this.yesterdayDiscount7thAmount += disc7th;
+          if (disc7th > 0) this.yesterdayDiscount7thCount++;
+        }
+        // Legacy tracking
         if (order.loyaltyApplied) {
           const disc = Number(order.loyaltyDiscountAmount || 0);
           this.yesterdayDiscountAmount += disc;
@@ -854,6 +908,18 @@ export class OrdersComponent implements OnInit {
       if (orderDate.isSameOrAfter(startOfWeek)) {
         this.weekSalesCount++;
         this.weekSalesAmount += orderTotal;
+        // Track loyalty discounts separately
+        if (order.descuento6taVisitaAplicado) {
+          const disc6th = Number(order.descuento6taVisitaMonto || 0);
+          this.weekDiscount6thAmount += disc6th;
+          if (disc6th > 0) this.weekDiscount6thCount++;
+        }
+        if (order.descuento7maVisitaAplicado) {
+          const disc7th = Number(order.descuento7maVisitaMonto || 0);
+          this.weekDiscount7thAmount += disc7th;
+          if (disc7th > 0) this.weekDiscount7thCount++;
+        }
+        // Legacy tracking
         if (order.loyaltyApplied) {
           const disc = Number(order.loyaltyDiscountAmount || 0);
           this.weekDiscountAmount += disc;
@@ -865,6 +931,18 @@ export class OrdersComponent implements OnInit {
       if (orderDate.isSameOrAfter(startOfMonth)) {
         this.monthSalesCount++;
         this.monthSalesAmount += orderTotal;
+        // Track loyalty discounts separately
+        if (order.descuento6taVisitaAplicado) {
+          const disc6th = Number(order.descuento6taVisitaMonto || 0);
+          this.monthDiscount6thAmount += disc6th;
+          if (disc6th > 0) this.monthDiscount6thCount++;
+        }
+        if (order.descuento7maVisitaAplicado) {
+          const disc7th = Number(order.descuento7maVisitaMonto || 0);
+          this.monthDiscount7thAmount += disc7th;
+          if (disc7th > 0) this.monthDiscount7thCount++;
+        }
+        // Legacy tracking
         if (order.loyaltyApplied) {
           const disc = Number(order.loyaltyDiscountAmount || 0);
           this.monthDiscountAmount += disc;

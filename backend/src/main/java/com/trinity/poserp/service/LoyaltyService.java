@@ -21,8 +21,11 @@ public class LoyaltyService {
     private final PlateLoyaltyRedemptionRepository redemptionRepository;
     private final SucursalRepository sucursalRepository;
 
-    @Value("${loyalty.threshold:6}")
+    @Value("${loyalty.threshold:7}")
     private int threshold;
+
+    @Value("${loyalty.threshold.partial:6}")
+    private int partialThreshold;
 
     @Value("${loyalty.minMinutesBetweenVisits:60}")
     private int minMinutesBetweenVisits;
@@ -37,21 +40,32 @@ public class LoyaltyService {
         this.sucursalRepository = sucursalRepository;
     }
 
-    public record LoyaltySummary(int visitsPaid, boolean eligible, int nextInCycle, LocalDateTime lastVisitAt) {
+    public record LoyaltySummary(
+            int visitsPaid,
+            boolean eligibleForFullDiscount, // 7th visit - 100%
+            boolean eligibleForPartialDiscount, // 6th visit - 10%
+            int nextInCycle,
+            LocalDateTime lastVisitAt) {
     }
 
     public LoyaltySummary getSummary(String plate, Long branchId) {
         // Global: sumar visitas de todas las sucursales para la placa
         java.util.List<PlateLoyaltyCounter> list = counterRepository.findByIdPlate(plate);
         int visits = list.stream().mapToInt(c -> Optional.ofNullable(c.getVisitsPaidCount()).orElse(0)).sum();
-        boolean eligible = visits >= threshold; // Corregido: debe ser >= 6, no >= 5
+
+        // 7th visit: 100% discount (gratis)
+        boolean eligibleFull = visits >= threshold;
+
+        // 6th visit: 10% discount
+        boolean eligiblePartial = !eligibleFull && visits >= partialThreshold;
+
         int next = (visits % threshold) + 1;
         LocalDateTime last = list.stream()
                 .map(PlateLoyaltyCounter::getLastVisitAt)
                 .filter(java.util.Objects::nonNull)
                 .max(LocalDateTime::compareTo)
                 .orElse(null);
-        return new LoyaltySummary(visits, eligible, next, last);
+        return new LoyaltySummary(visits, eligibleFull, eligiblePartial, next, last);
     }
 
     @Transactional
@@ -92,9 +106,10 @@ public class LoyaltyService {
         // Global: contar visitas totales de la placa
         java.util.List<PlateLoyaltyCounter> list = counterRepository.findByIdPlate(plate);
         int visits = list.stream().mapToInt(c -> Optional.ofNullable(c.getVisitsPaidCount()).orElse(0)).sum();
+
+        // Only redeem on 7th visit (100% discount)
         if (visits >= threshold) {
-            // Reset de ciclo: poner en cero el contador de la sucursal actual (mantener
-            // modelo)
+            // Reset de ciclo: poner en cero el contador de la sucursal actual
             PlateLoyaltyCounterId id = new PlateLoyaltyCounterId(plate, branchId);
             PlateLoyaltyCounter c = counterRepository.findById(id).orElse(null);
             if (c != null) {

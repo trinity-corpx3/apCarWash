@@ -74,13 +74,13 @@ public class OrdenCompra {
     @Column(name = "descuento_6ta_visita_aplicado", nullable = false)
     private Boolean descuento6taVisitaAplicado = false;
 
-    @Column(name = "descuento_6ta_visita_monto", precision = 10, scale = 2)
+    @Column(name = "descuento_6ta_visita_monto")
     private Double descuento6taVisitaMonto = 0.0;
 
     @Column(name = "descuento_7ma_visita_aplicado", nullable = false)
     private Boolean descuento7maVisitaAplicado = false;
 
-    @Column(name = "descuento_7ma_visita_monto", precision = 10, scale = 2)
+    @Column(name = "descuento_7ma_visita_monto")
     private Double descuento7maVisitaMonto = 0.0;
 
     public Double getCantidadRecibida() {

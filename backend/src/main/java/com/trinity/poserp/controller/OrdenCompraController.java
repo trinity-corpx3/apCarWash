@@ -159,9 +159,10 @@ public class OrdenCompraController {
                 return new ResponseEntity<>("El nombre de la sucursal es obligatorio.", HttpStatus.BAD_REQUEST);
             }
 
-            // Ajustar la fecha a la zona horaria de Ciudad de México
-            LocalDateTime fechaLocal = ajustarFechaZonaHoraria(ordenCompraDto.getFecha(), "America/Mexico_City");
-            ordenCompraDto.setFecha(fechaLocal);
+            // Guardar la fecha en UTC tal cual viene del frontend
+            // LocalDateTime fechaLocal = ajustarFechaZonaHoraria(ordenCompraDto.getFecha(),
+            // "America/Mexico_City");
+            // ordenCompraDto.setFecha(fechaLocal);
 
             // Guardar la orden de compra
             OrdenCompra newOrder = ordenCompraService.save(ordenCompraDto);

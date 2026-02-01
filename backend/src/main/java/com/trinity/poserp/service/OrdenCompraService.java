@@ -229,7 +229,24 @@ public class OrdenCompraService {
     }
 
     public List<OrdenCompra> findBySucursalIdAndCurrentMonth(Long sucursalId) {
-        return ordenCompraRepository.findBySucursalIdAndCurrentMonth(sucursalId);
+        // Calcular inicio y fin de mes en zona horaria de México
+        java.time.ZoneId zoneId = java.time.ZoneId.of("America/Mexico_City");
+        java.time.ZonedDateTime now = java.time.ZonedDateTime.now(zoneId);
+
+        java.time.ZonedDateTime startMonth = now.withDayOfMonth(1).toLocalDate().atStartOfDay(zoneId);
+        java.time.ZonedDateTime endMonth = now.with(java.time.temporal.TemporalAdjusters.lastDayOfMonth()).toLocalDate()
+                .atTime(23, 59, 59).atZone(zoneId);
+
+        // Convertir a LocalDateTime (que es lo que espera la BD si no usa timezone, o
+        // UTC si sí)
+        // Asumiendo que la BD guarda timestamps sin zona horaria o el driver convierte
+        // correctamente
+        java.time.LocalDateTime start = startMonth.toLocalDateTime();
+        java.time.LocalDateTime end = endMonth.toLocalDateTime();
+
+        System.out.println("🔎 Buscando ventas del mes (local Mexico): " + start + " a " + end);
+
+        return ordenCompraRepository.findBySucursalIdAndCurrentMonth(sucursalId, start, end);
     }
 
     public List<OrdenCompra> findBySucursalIdAndSpecificMonth(Long sucursalId, int mes, int anio) {

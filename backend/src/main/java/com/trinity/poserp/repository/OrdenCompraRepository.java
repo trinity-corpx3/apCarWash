@@ -27,8 +27,11 @@ public interface OrdenCompraRepository extends JpaRepository<OrdenCompra, Long> 
         List<OrdenCompra> findBySucursalId(@Param("sucursalId") Long sucursalId);
 
         // Consulta para filtrar por sucursal y mes actual
-        @Query("SELECT o FROM OrdenCompra o WHERE o.sucursal.id = :sucursalId AND EXTRACT(MONTH FROM o.fecha) = EXTRACT(MONTH FROM CURRENT_DATE) AND EXTRACT(YEAR FROM o.fecha) = EXTRACT(YEAR FROM CURRENT_DATE)")
-        List<OrdenCompra> findBySucursalIdAndCurrentMonth(@Param("sucursalId") Long sucursalId);
+        // Consulta para filtrar por sucursal y rango de fechas (reemplaza mes actual
+        // por DB)
+        @Query("SELECT o FROM OrdenCompra o WHERE o.sucursal.id = :sucursalId AND o.fecha >= :start AND o.fecha <= :end")
+        List<OrdenCompra> findBySucursalIdAndCurrentMonth(@Param("sucursalId") Long sucursalId,
+                        @Param("start") java.time.LocalDateTime start, @Param("end") java.time.LocalDateTime end);
 
         // Consulta para filtrar por sucursal y mes específico
         @Query("SELECT o FROM OrdenCompra o WHERE o.sucursal.id = :sucursalId AND EXTRACT(MONTH FROM o.fecha) = :mes AND EXTRACT(YEAR FROM o.fecha) = :anio")
@@ -92,7 +95,8 @@ public interface OrdenCompraRepository extends JpaRepository<OrdenCompra, Long> 
 
         // Obtener órdenes por placa en rango de fechas
         @Query("SELECT o FROM OrdenCompra o WHERE o.placa = :placa AND o.estado <> 'anulado' AND DATE(o.fecha) >= DATE(:fechaInicio) AND DATE(o.fecha) <= DATE(:fechaFin) ORDER BY o.fecha DESC")
-        List<OrdenCompra> findByPlacaAndDateRange(@Param("placa") String placa, @Param("fechaInicio") String fechaInicio, @Param("fechaFin") String fechaFin);
+        List<OrdenCompra> findByPlacaAndDateRange(@Param("placa") String placa,
+                        @Param("fechaInicio") String fechaInicio, @Param("fechaFin") String fechaFin);
 
         // Estadísticas de placa (total gastado, tickets, descuentos)
         @Query(value = "SELECT " +

@@ -39,7 +39,7 @@ public interface OrdenCompraRepository extends JpaRepository<OrdenCompra, Long> 
                         @Param("anio") int anio);
 
         // Consulta para filtrar por sucursal y rango de fechas
-        @Query("SELECT o FROM OrdenCompra o WHERE o.sucursal.id = :sucursalId AND DATE(o.fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City') >= DATE(:fechaInicio) AND DATE(o.fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City') <= DATE(:fechaFin) ORDER BY o.fecha DESC")
+        @Query(value = "SELECT * FROM ordenes_compra o WHERE o.sucursal_id = :sucursalId AND DATE(o.fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City') >= DATE(:fechaInicio) AND DATE(o.fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City') <= DATE(:fechaFin) ORDER BY o.fecha DESC", nativeQuery = true)
         List<OrdenCompra> findBySucursalIdAndDateRange(@Param("sucursalId") Long sucursalId,
                         @Param("fechaInicio") String fechaInicio, @Param("fechaFin") String fechaFin);
 
@@ -96,7 +96,7 @@ public interface OrdenCompraRepository extends JpaRepository<OrdenCompra, Long> 
         Long countByPlaca(@Param("placa") String placa);
 
         // Obtener órdenes por placa en rango de fechas
-        @Query("SELECT o FROM OrdenCompra o WHERE o.placa = :placa AND o.estado <> 'anulado' AND DATE(o.fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City') >= DATE(:fechaInicio) AND DATE(o.fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City') <= DATE(:fechaFin) ORDER BY o.fecha DESC")
+        @Query(value = "SELECT * FROM ordenes_compra o WHERE o.placa = :placa AND o.estado <> 'anulado' AND DATE(o.fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City') >= DATE(:fechaInicio) AND DATE(o.fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City') <= DATE(:fechaFin) ORDER BY o.fecha DESC", nativeQuery = true)
         List<OrdenCompra> findByPlacaAndDateRange(@Param("placa") String placa,
                         @Param("fechaInicio") String fechaInicio, @Param("fechaFin") String fechaFin);
 

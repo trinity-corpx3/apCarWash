@@ -237,12 +237,9 @@ public class OrdenCompraService {
         java.time.ZonedDateTime endMonth = now.with(java.time.temporal.TemporalAdjusters.lastDayOfMonth()).toLocalDate()
                 .atTime(23, 59, 59).atZone(zoneId);
 
-        // Convertir a LocalDateTime (que es lo que espera la BD si no usa timezone, o
-        // UTC si sí)
-        // Asumiendo que la BD guarda timestamps sin zona horaria o el driver convierte
-        // correctamente
-        java.time.LocalDateTime start = startMonth.toLocalDateTime();
-        java.time.LocalDateTime end = endMonth.toLocalDateTime();
+        // Convertir a UTC antes de extraer LocalDateTime, ya que la BD guarda en UTC
+        java.time.LocalDateTime start = startMonth.withZoneSameInstant(java.time.ZoneId.of("UTC")).toLocalDateTime();
+        java.time.LocalDateTime end = endMonth.withZoneSameInstant(java.time.ZoneId.of("UTC")).toLocalDateTime();
 
         System.out.println("🔎 Buscando ventas del mes (local Mexico): " + start + " a " + end);
 

@@ -590,7 +590,7 @@ export class OrdersComponent implements OnInit {
   processOrders(orders: any[]): any[] {
     return orders.map((order: any) => {
       if (order?.fecha) {
-        const date = new Date(order.fecha);
+        const date = moment.utc(order.fecha).local().toDate();
         order.fecha = `${date.getFullYear()}-${(date.getMonth() + 1)
           .toString()
           .padStart(2, '0')}-${date.getDate()
@@ -850,7 +850,7 @@ export class OrdersComponent implements OnInit {
 
     // Procesar las órdenes y calcular el resumen
     this.ordenes.forEach(order => {
-      const orderDate = moment(order.fecha); // Convierte la fecha de la orden
+      const orderDate = moment.utc(order.fecha).local(); // Convierte la fecha de la orden desde UTC a Local
       const orderTotal = order.total || 0; // Total de la orden
 
       // Validar sucursal
@@ -985,7 +985,7 @@ export class OrdersComponent implements OnInit {
     const diasUnicos = new Set<string>();
 
     this.ordenes.forEach(order => {
-      const orderDate = new Date(order.fecha);
+      const orderDate = moment.utc(order.fecha).local().toDate();
       const dia = orderDate.getDate().toString().padStart(2, '0');
       diasUnicos.add(dia);
 
@@ -1011,7 +1011,7 @@ export class OrdersComponent implements OnInit {
 
   applyFilter(): void {
     this.filteredOrders = this.ordenes.filter(order => {
-      const orderDate = moment(order.fecha);
+      const orderDate = moment.utc(order.fecha).local();
       let matchesDateRange = true;
       let matchesPaymentMethod = true;
 
@@ -1134,7 +1134,7 @@ export class OrdersComponent implements OnInit {
     doc.text(`${ticketData.receiptNumber}`, 5, yPosition);
     yPosition += lineHeight;
     // Fecha y Hora de la venta (usar fecha real de la orden si está disponible)
-    const ventaDate = ticketData?.fechaVenta ? new Date(ticketData.fechaVenta) : new Date();
+    const ventaDate = ticketData?.fechaVenta ? moment.utc(ticketData.fechaVenta).local().toDate() : new Date();
     const fechaStr = ventaDate.toLocaleDateString('es-MX');
     const horaStr = ventaDate.toLocaleTimeString('es-MX');
     doc.text(`Fecha: ${fechaStr}`, 5, yPosition);
@@ -1384,7 +1384,7 @@ export class OrdersComponent implements OnInit {
 
     // Filtrar por rango de fechas Y sucursal desde las órdenes locales
     const filteredOrders = this.ordenes.filter(order => {
-      const orderDate = moment(order.fecha);
+      const orderDate = moment.utc(order.fecha).local();
       const cumpleFecha = orderDate.isBetween(startDate, endDate, undefined, '[]');
       const cumpleSucursal = order.sucursal?.id === this.currentSucursalId;
 

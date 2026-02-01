@@ -34,12 +34,12 @@ public interface OrdenCompraRepository extends JpaRepository<OrdenCompra, Long> 
                         @Param("start") java.time.LocalDateTime start, @Param("end") java.time.LocalDateTime end);
 
         // Consulta para filtrar por sucursal y mes específico
-        @Query("SELECT o FROM OrdenCompra o WHERE o.sucursal.id = :sucursalId AND EXTRACT(MONTH FROM o.fecha) = :mes AND EXTRACT(YEAR FROM o.fecha) = :anio")
+        @Query(value = "SELECT * FROM ordenes_compra o WHERE o.sucursal_id = :sucursalId AND EXTRACT(MONTH FROM o.fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City') = :mes AND EXTRACT(YEAR FROM o.fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City') = :anio", nativeQuery = true)
         List<OrdenCompra> findBySucursalIdAndSpecificMonth(@Param("sucursalId") Long sucursalId, @Param("mes") int mes,
                         @Param("anio") int anio);
 
         // Consulta para filtrar por sucursal y rango de fechas
-        @Query("SELECT o FROM OrdenCompra o WHERE o.sucursal.id = :sucursalId AND DATE(o.fecha) >= DATE(:fechaInicio) AND DATE(o.fecha) <= DATE(:fechaFin) ORDER BY o.fecha DESC")
+        @Query("SELECT o FROM OrdenCompra o WHERE o.sucursal.id = :sucursalId AND DATE(o.fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City') >= DATE(:fechaInicio) AND DATE(o.fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City') <= DATE(:fechaFin) ORDER BY o.fecha DESC")
         List<OrdenCompra> findBySucursalIdAndDateRange(@Param("sucursalId") Long sucursalId,
                         @Param("fechaInicio") String fechaInicio, @Param("fechaFin") String fechaFin);
 
@@ -50,7 +50,7 @@ public interface OrdenCompraRepository extends JpaRepository<OrdenCompra, Long> 
         @Query("SELECT o FROM OrdenCompra o WHERE o.numeroRecibo = :numeroRecibo")
         Optional<OrdenCompra> findByNumeroRecibo(@Param("numeroRecibo") String numeroRecibo);
 
-        @Query("SELECT SUM(o.total) as totalVendido, SUM(CASE WHEN o.facturada = true THEN o.total ELSE 0 END) as totalFacturado, SUM(CASE WHEN o.facturada = false THEN o.total ELSE 0 END) as totalNoFacturado FROM OrdenCompra o WHERE o.sucursal.id = :sucursalId AND EXTRACT(MONTH FROM o.fecha) = :mes AND EXTRACT(YEAR FROM o.fecha) = :anio")
+        @Query(value = "SELECT SUM(o.total) as totalVendido, SUM(CASE WHEN o.facturada = true THEN o.total ELSE 0 END) as totalFacturado, SUM(CASE WHEN o.facturada = false THEN o.total ELSE 0 END) as totalNoFacturado FROM ordenes_compra o WHERE o.sucursal_id = :sucursalId AND EXTRACT(MONTH FROM o.fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City') = :mes AND EXTRACT(YEAR FROM o.fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City') = :anio", nativeQuery = true)
         Map<String, Object> obtenerResumenMes(@Param("sucursalId") Long sucursalId, @Param("mes") int mes,
                         @Param("anio") int anio);
 
@@ -59,18 +59,19 @@ public interface OrdenCompraRepository extends JpaRepository<OrdenCompra, Long> 
         Integer countFacturasEmitidas();
 
         // Agregados diarios (GLOBAL) por rango de fechas
-        @Query(value = "SELECT DATE(o.fecha) AS dia, SUM(o.total) AS subtotal, COALESCE(SUM(o.loyalty_discount_amount),0) AS descuentos, COUNT(*) AS tickets "
+        @Query(value = "SELECT DATE(o.fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City') AS dia, SUM(o.total) AS subtotal, COALESCE(SUM(o.loyalty_discount_amount),0) AS descuentos, COUNT(*) AS tickets "
                         +
                         "FROM ordenes_compra o " +
-                        "WHERE DATE(o.fecha) BETWEEN DATE(:start) AND DATE(:end) AND o.estado <> 'anulado' " +
-                        "GROUP BY DATE(o.fecha) ORDER BY dia", nativeQuery = true)
+                        "WHERE DATE(o.fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City') BETWEEN DATE(:start) AND DATE(:end) AND o.estado <> 'anulado' "
+                        +
+                        "GROUP BY DATE(o.fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City') ORDER BY dia", nativeQuery = true)
         List<Object[]> aggregateDailyGlobal(@Param("start") String start, @Param("end") String end);
 
         // Agregados diarios por sucursal (rango de fechas)
-        @Query(value = "SELECT DATE(o.fecha) AS dia, SUM(o.total) AS subtotal, COALESCE(SUM(o.loyalty_discount_amount),0) AS descuentos, COUNT(*) AS tickets "
+        @Query(value = "SELECT DATE(o.fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City') AS dia, SUM(o.total) AS subtotal, COALESCE(SUM(o.loyalty_discount_amount),0) AS descuentos, COUNT(*) AS tickets "
                         + "FROM ordenes_compra o "
-                        + "WHERE DATE(o.fecha) BETWEEN DATE(:start) AND DATE(:end) AND o.estado <> 'anulado' AND o.sucursal_id = :sucursalId "
-                        + "GROUP BY DATE(o.fecha) ORDER BY dia", nativeQuery = true)
+                        + "WHERE DATE(o.fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City') BETWEEN DATE(:start) AND DATE(:end) AND o.estado <> 'anulado' AND o.sucursal_id = :sucursalId "
+                        + "GROUP BY DATE(o.fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City') ORDER BY dia", nativeQuery = true)
         List<Object[]> aggregateDailyBySucursal(@Param("start") String start, @Param("end") String end,
                         @Param("sucursalId") Long sucursalId);
 
@@ -81,7 +82,8 @@ public interface OrdenCompraRepository extends JpaRepository<OrdenCompra, Long> 
                         "FROM ordenes_compra o " +
                         "LEFT JOIN ordenes_compra_productos ocp ON o.id = ocp.orden_compra_id " +
                         "WHERE o.sucursal_id = :sucursalId " +
-                        "AND DATE(o.fecha) = CURRENT_DATE " +
+                        "AND DATE(o.fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City') = (CURRENT_TIMESTAMP AT TIME ZONE 'America/Mexico_City')::date "
+                        +
                         "AND o.estado = 'completado'", nativeQuery = true)
         Map<String, Object> getEstadisticasDia(@Param("sucursalId") Long sucursalId);
 
@@ -94,7 +96,7 @@ public interface OrdenCompraRepository extends JpaRepository<OrdenCompra, Long> 
         Long countByPlaca(@Param("placa") String placa);
 
         // Obtener órdenes por placa en rango de fechas
-        @Query("SELECT o FROM OrdenCompra o WHERE o.placa = :placa AND o.estado <> 'anulado' AND DATE(o.fecha) >= DATE(:fechaInicio) AND DATE(o.fecha) <= DATE(:fechaFin) ORDER BY o.fecha DESC")
+        @Query("SELECT o FROM OrdenCompra o WHERE o.placa = :placa AND o.estado <> 'anulado' AND DATE(o.fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City') >= DATE(:fechaInicio) AND DATE(o.fecha AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City') <= DATE(:fechaFin) ORDER BY o.fecha DESC")
         List<OrdenCompra> findByPlacaAndDateRange(@Param("placa") String placa,
                         @Param("fechaInicio") String fechaInicio, @Param("fechaFin") String fechaFin);
 

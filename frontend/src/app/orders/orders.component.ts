@@ -973,24 +973,52 @@ export class OrdersComponent implements OnInit {
   }
 
   calculateHistoricalSummary(): void {
-    // Resetear contadores
-    this.diasConVentas = 0;
-    this.totalMesHistorico = 0;
+    // Resetear contadores mensuales
     this.monthSalesCount = 0;
     this.monthSalesAmount = 0;
     this.monthDiscountAmount = 0;
     this.monthDiscountCount = 0;
+    this.monthNetAmount = 0;
+
+    // Reiniciar contadores de descuentos específicos (10% y 100%)
+    this.monthDiscount6thAmount = 0;
+    this.monthDiscount6thCount = 0;
+    this.monthDiscount7thAmount = 0;
+    this.monthDiscount7thCount = 0;
+
+    this.diasConVentas = 0;
+    this.totalMesHistorico = 0;
 
     // Agrupar por días para contar días únicos con ventas
     const diasUnicos = new Set<string>();
 
     this.ordenes.forEach(order => {
+      // Validar sucursal (aunque el backend ya filtra, mantenemos consistencia)
+      if (order.sucursal?.id !== this.currentSucursalId) {
+        return;
+      }
+
       const orderDate = moment.utc(order.fecha).local().toDate();
       const dia = orderDate.getDate().toString().padStart(2, '0');
       diasUnicos.add(dia);
 
+      const orderTotal = order.total || 0;
       this.monthSalesCount++;
-      this.monthSalesAmount += order.total || 0;
+      this.monthSalesAmount += orderTotal;
+
+      // Track loyalty discounts (10% y 100%)
+      if (order.descuento6taVisitaAplicado) {
+        const disc6th = Number(order.descuento6taVisitaMonto || 0);
+        this.monthDiscount6thAmount += disc6th;
+        if (disc6th > 0) this.monthDiscount6thCount++;
+      }
+      if (order.descuento7maVisitaAplicado) {
+        const disc7th = Number(order.descuento7maVisitaMonto || 0);
+        this.monthDiscount7thAmount += disc7th;
+        if (disc7th > 0) this.monthDiscount7thCount++;
+      }
+
+      // Legacy tracking
       if (order.loyaltyApplied) {
         const disc = Number(order.loyaltyDiscountAmount || 0);
         this.monthDiscountAmount += disc;
@@ -999,13 +1027,15 @@ export class OrdersComponent implements OnInit {
     });
 
     this.diasConVentas = diasUnicos.size;
-    this.totalMesHistorico = this.monthSalesAmount;
+    this.monthNetAmount = +(this.monthSalesAmount - this.monthDiscountAmount);
+    this.totalMesHistorico = this.monthNetAmount;
 
     console.log('Resumen histórico calculado:', {
       diasConVentas: this.diasConVentas,
       totalMesHistorico: this.totalMesHistorico,
       monthSalesCount: this.monthSalesCount,
-      monthSalesAmount: this.monthSalesAmount
+      monthSalesAmount: this.monthSalesAmount,
+      monthNetAmount: this.monthNetAmount
     });
   }
 

@@ -233,15 +233,30 @@ public class OrdenCompraService {
         java.time.ZoneId zoneId = java.time.ZoneId.of("America/Mexico_City");
         java.time.ZonedDateTime now = java.time.ZonedDateTime.now(zoneId);
 
+        // Para poblar las "cards" del frontend (Hoy, Ayer, Semana, Mes), necesitamos
+        // asegurar que el rango cubra el mínimo de: inicio de mes, inicio de semana o
+        // ayer.
         java.time.ZonedDateTime startMonth = now.withDayOfMonth(1).toLocalDate().atStartOfDay(zoneId);
+        java.time.ZonedDateTime startWeek = now.minusDays(now.getDayOfWeek().getValue() - 1).toLocalDate()
+                .atStartOfDay(zoneId);
+        java.time.ZonedDateTime yesterday = now.minusDays(1).toLocalDate().atStartOfDay(zoneId);
+
+        // El inicio de la búsqueda será el más antiguo de estos tres
+        java.time.ZonedDateTime earliestStart = startMonth;
+        if (startWeek.isBefore(earliestStart))
+            earliestStart = startWeek;
+        if (yesterday.isBefore(earliestStart))
+            earliestStart = yesterday;
+
         java.time.ZonedDateTime endMonth = now.with(java.time.temporal.TemporalAdjusters.lastDayOfMonth()).toLocalDate()
                 .atTime(23, 59, 59).atZone(zoneId);
 
         // Convertir a UTC antes de extraer LocalDateTime, ya que la BD guarda en UTC
-        java.time.LocalDateTime start = startMonth.withZoneSameInstant(java.time.ZoneId.of("UTC")).toLocalDateTime();
+        java.time.LocalDateTime start = earliestStart.withZoneSameInstant(java.time.ZoneId.of("UTC")).toLocalDateTime();
         java.time.LocalDateTime end = endMonth.withZoneSameInstant(java.time.ZoneId.of("UTC")).toLocalDateTime();
 
-        System.out.println("🔎 Buscando ventas del mes (local Mexico): " + start + " a " + end);
+        System.out
+                .println("🔎 Buscando órdenes para vista actual (sucursal " + sucursalId + "): " + start + " a " + end);
 
         return ordenCompraRepository.findBySucursalIdAndCurrentMonth(sucursalId, start, end);
     }

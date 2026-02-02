@@ -1611,18 +1611,30 @@ export class OrdersComponent implements OnInit {
     // Procesar las órdenes
     orders.forEach(order => {
       // Actualizar métodos de pago
-      if (order.metodoPago?.toLowerCase() === 'efectivo') {
+      const metodo = (order.metodoPago || '').toLowerCase();
+      if (metodo === 'efectivo') {
         paymentMethods.cash += order.total || 0;
-      } else if (order.metodoPago?.toLowerCase().includes('credito')) {
+      } else if (metodo.includes('credito') || metodo.includes('crédito')) {
         paymentMethods.credit += order.total || 0;
-      } else if (order.metodoPago?.toLowerCase().includes('debito')) {
+      } else if (metodo.includes('debito') || metodo.includes('débito') || metodo.includes('tarjeta')) {
         paymentMethods.debit += order.total || 0;
       }
-      // Descuentos 6ª
+
+      // Sumar todos los tipos de descuentos
+      let orderDiscount = 0;
+      if (order.descuento6taVisitaAplicado) {
+        orderDiscount += Number(order.descuento6taVisitaMonto || 0);
+      }
+      if (order.descuento7maVisitaAplicado) {
+        orderDiscount += Number(order.descuento7maVisitaMonto || 0);
+      }
       if (order.loyaltyApplied) {
-        const d = Number(order.loyaltyDiscountAmount || 0);
-        totalDiscounts += d;
-        if (d > 0) discountCount++;
+        orderDiscount += Number(order.loyaltyDiscountAmount || 0);
+      }
+
+      if (orderDiscount > 0) {
+        totalDiscounts += orderDiscount;
+        discountCount++;
       }
 
       // Procesar los productos vendidos en la orden
@@ -2168,18 +2180,31 @@ export class OrdersComponent implements OnInit {
     // Procesar las órdenes
     data.forEach(order => {
       total += order.total || 0;
+
+      // Sumar todos los tipos de descuentos
+      let orderDiscount = 0;
+      if (order.descuento6taVisitaAplicado) {
+        orderDiscount += Number(order.descuento6taVisitaMonto || 0);
+      }
+      if (order.descuento7maVisitaAplicado) {
+        orderDiscount += Number(order.descuento7maVisitaMonto || 0);
+      }
       if (order.loyaltyApplied) {
-        const disc = Number(order.loyaltyDiscountAmount || 0);
-        totalDiscounts += disc;
-        if (disc > 0) discountCount++;
+        orderDiscount += Number(order.loyaltyDiscountAmount || 0);
+      }
+
+      if (orderDiscount > 0) {
+        totalDiscounts += orderDiscount;
+        discountCount++;
       }
 
       // Actualizar métodos de pago
-      if (order.metodoPago.toLowerCase() === 'efectivo') {
+      const metodo = (order.metodoPago || '').toLowerCase();
+      if (metodo === 'efectivo') {
         paymentMethods.cash += order.total || 0;
-      } else if (order.metodoPago.toLowerCase().includes('credito')) {
+      } else if (metodo.includes('credito') || metodo.includes('crédito')) {
         paymentMethods.credit += order.total || 0;
-      } else if (order.metodoPago.toLowerCase().includes('debito')) {
+      } else if (metodo.includes('debito') || metodo.includes('débito') || metodo.includes('tarjeta')) {
         paymentMethods.debit += order.total || 0;
       }
 
@@ -2243,28 +2268,28 @@ export class OrdersComponent implements OnInit {
 
 
 
-  // Métodos para verificar si una orden es de hoy, ayer, esta semana o este mes
+  // Métodos para verificar si una orden es de hoy, ayer, esta semana o este mes (usando hora local)
   isOrderFromToday(dateString: string): boolean {
     const today = moment().startOf('day');
-    const orderDate = moment(dateString);
+    const orderDate = moment.utc(dateString).local().startOf('day');
     return orderDate.isSame(today, 'day');
   }
 
   isOrderFromYesterday(dateString: string): boolean {
     const yesterday = moment().subtract(1, 'day').startOf('day');
-    const orderDate = moment(dateString);
+    const orderDate = moment.utc(dateString).local().startOf('day');
     return orderDate.isSame(yesterday, 'day');
   }
 
   isOrderFromThisWeek(dateString: string): boolean {
     const startOfWeek = moment().startOf('isoWeek');
-    const orderDate = moment(dateString);
+    const orderDate = moment.utc(dateString).local().startOf('day');
     return orderDate.isSameOrAfter(startOfWeek);
   }
 
   isOrderFromThisMonth(dateString: string): boolean {
     const startOfMonth = moment().startOf('month');
-    const orderDate = moment(dateString);
+    const orderDate = moment.utc(dateString).local().startOf('day');
     return orderDate.isSameOrAfter(startOfMonth);
   }
 

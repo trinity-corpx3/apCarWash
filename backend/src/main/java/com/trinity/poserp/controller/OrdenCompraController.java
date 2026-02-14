@@ -160,9 +160,9 @@ public class OrdenCompraController {
                 return new ResponseEntity<>("El nombre de la sucursal es obligatorio.", HttpStatus.BAD_REQUEST);
             }
 
-            // Fuente de verdad: siempre usar hora del backend en UTC para persistencia.
-            // La UI convierte este valor a America/Mexico_City al mostrarlo.
-            ordenCompraDto.setFecha(LocalDateTime.now(ZoneOffset.UTC));
+            // Fuente de verdad: guardar siempre en hora de México.
+            // Lo que se guarda en BD = lo que se muestra en pantalla.
+            ordenCompraDto.setFecha(LocalDateTime.now(ZoneId.of("America/Mexico_City")));
 
             // Guardar la orden de compra
             OrdenCompra newOrder = ordenCompraService.save(ordenCompraDto);

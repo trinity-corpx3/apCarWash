@@ -541,7 +541,10 @@ export class OrdersComponent implements OnInit {
   private readonly mexicoOffset = '-06:00';
 
   private getNowInMexico(): moment.Moment {
-    return moment.parseZone(moment().utcOffset(this.mexicoOffset).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+    // Construir "ahora" en hora de México usando el offset fijo -06:00
+    const nowMx = moment.utc().utcOffset(this.mexicoOffset);
+    // Devolver como moment local (sin zona) para comparar con fechas de BD
+    return moment(nowMx.format('YYYY-MM-DDTHH:mm:ss.SSS'));
   }
 
   private parseDateInMexico(date: string, endOfDay: boolean = false): moment.Moment {
@@ -553,13 +556,12 @@ export class OrdersComponent implements OnInit {
     if (!fecha) {
       return moment.invalid();
     }
-    // Forzamos interpretación uniforme: el valor almacenado en BD se trata como UTC naive.
-    // Esto evita mezclas cuando el payload llega con/ sin offset.
+    // La BD ya guarda en hora de México. Interpretamos tal cual, sin conversión de zona.
     const normalized = fecha
       .trim()
       .replace(' ', 'T')
       .replace(/(Z|[+-]\d{2}:\d{2})$/, '');
-    return moment.utc(normalized).utcOffset(this.mexicoOffset);
+    return moment(normalized);
   }
 
   private parseOrderDateLocal(fecha: string | null | undefined): Date {

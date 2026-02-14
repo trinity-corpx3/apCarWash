@@ -693,14 +693,18 @@ export class PosComponent implements OnInit {
     // Fecha y Hora de la venta
     doc.text(`Fecha y Hora:`, 5, yPosition);
     yPosition += lineHeight;
-    // Interpretar fecha del backend como UTC y mostrar en hora de Mexico
+    // La fecha del backend ya viene en hora de México, mostrar tal cual
     const rawFecha = ticketData?.fechaVenta as string | null;
-    const fechaUtc = rawFecha
-      ? (/Z|[+-]\d{2}:\d{2}$/.test(rawFecha) ? rawFecha : `${rawFecha}Z`)
-      : null;
-    const fechaHoraStr = fechaUtc
-      ? new Date(fechaUtc).toLocaleString('es-MX', { timeZone: 'America/Mexico_City' })
-      : new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' });
+    let fechaHoraStr: string;
+    if (rawFecha) {
+      const normalized = rawFecha.trim().replace(' ', 'T').replace(/(Z|[+-]\d{2}:\d{2})$/, '');
+      const d = new Date(normalized);
+      fechaHoraStr = isNaN(d.getTime())
+        ? rawFecha
+        : `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+    } else {
+      fechaHoraStr = new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' });
+    }
     doc.text(`${fechaHoraStr}`, 5, yPosition);
     yPosition += lineHeight;
     doc.text(`Atendido por:`, 5, yPosition);
@@ -1413,11 +1417,16 @@ export class PosComponent implements OnInit {
     totalImpuestos = +totalImpuestos.toFixed(2);
     const total = +(subtotal + totalImpuestos).toFixed(2);
 
-    // ✅ Usar la fecha/hora de venta del servidor como fuente de verdad
-    const baseDate = this.lastSaleDate ? new Date(this.lastSaleDate) : new Date();
-    const fechaMexico = baseDate
-      .toLocaleString('sv-SE', { timeZone: 'America/Mexico_City' })
-      .replace(' ', 'T');
+    // La fecha del backend ya viene en hora de México, usar tal cual
+    let fechaMexico: string;
+    if (this.lastSaleDate) {
+      const raw = String(this.lastSaleDate).trim().replace(' ', 'T').replace(/(Z|[+-]\d{2}:\d{2})$/, '');
+      fechaMexico = raw;
+    } else {
+      fechaMexico = new Date()
+        .toLocaleString('sv-SE', { timeZone: 'America/Mexico_City' })
+        .replace(' ', 'T');
+    }
 
     const sucursalId = this.authService.getSucursalId();
 

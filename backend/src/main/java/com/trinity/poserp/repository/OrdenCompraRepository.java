@@ -44,7 +44,7 @@ public interface OrdenCompraRepository extends JpaRepository<OrdenCompra, Long> 
                         @Param("fechaInicio") String fechaInicio, @Param("fechaFin") String fechaFin);
 
         // método para obtener el último número de recibo generado por sucursal
-        @Query("SELECT o.numeroRecibo FROM OrdenCompra o WHERE o.sucursal.id = :sucursalId ORDER BY o.fecha DESC LIMIT 1")
+        @Query(value = "SELECT o.numero_recibo FROM ordenes_compra o WHERE o.sucursal_id = :sucursalId ORDER BY o.id DESC LIMIT 1", nativeQuery = true)
         String findUltimoReciboPorSucursal(@Param("sucursalId") Long sucursalId);
 
         @Query("SELECT o FROM OrdenCompra o WHERE o.numeroRecibo = :numeroRecibo")

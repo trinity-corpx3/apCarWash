@@ -64,8 +64,8 @@ public class OrdenCompraService {
             throw new IllegalArgumentException("El ID de la sucursal no puede ser nulo.");
         }
 
-        // Obtener la sucursal
-        Sucursal sucursal = sucursalRepository.findById(ordenCompraDto.getSucursalId())
+        // Bloquear la sucursal para evitar colisiones de folio en ventas concurrentes
+        Sucursal sucursal = sucursalRepository.findByIdForUpdate(ordenCompraDto.getSucursalId())
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Sucursal no encontrada con ID: " + ordenCompraDto.getSucursalId()));
 

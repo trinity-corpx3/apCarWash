@@ -693,13 +693,14 @@ export class PosComponent implements OnInit {
     // Fecha y Hora de la venta
     doc.text(`Fecha y Hora:`, 5, yPosition);
     yPosition += lineHeight;
-    // Determinar cómo formatear la fecha según si trae zona horaria
+    // Interpretar fecha del backend como UTC y mostrar en hora de Mexico
     const rawFecha = ticketData?.fechaVenta as string | null;
-    const fechaHoraStr = (rawFecha && /Z|[+-]\d{2}:\d{2}$/.test(rawFecha))
-      ? new Date(rawFecha).toLocaleString('es-MX', { timeZone: 'America/Mexico_City' })
-      : (rawFecha
-        ? rawFecha.replace('T', ' ').slice(0, 19)
-        : new Date().toLocaleString('es-MX'));
+    const fechaUtc = rawFecha
+      ? (/Z|[+-]\d{2}:\d{2}$/.test(rawFecha) ? rawFecha : `${rawFecha}Z`)
+      : null;
+    const fechaHoraStr = fechaUtc
+      ? new Date(fechaUtc).toLocaleString('es-MX', { timeZone: 'America/Mexico_City' })
+      : new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' });
     doc.text(`${fechaHoraStr}`, 5, yPosition);
     yPosition += lineHeight;
     doc.text(`Atendido por:`, 5, yPosition);

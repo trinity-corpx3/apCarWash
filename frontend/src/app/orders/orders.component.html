@@ -225,7 +225,7 @@
                   title="Ticket de Gasolina (25%)">TG</span>
               </td>
               <td>{{ orden.total | currency:'MXN' }}</td>
-              <td>{{ (orden.fecha + 'Z') | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td>{{ formatOrderDateMexico(orden.fecha) }}</td>
               <td>
                 <span class="badge"
                   [ngClass]="{'bg-success': orden.metodoPago === 'Efectivo', 'bg-primary': orden.metodoPago !== 'Efectivo'}">

@@ -249,7 +249,7 @@ export class OrdersComponent implements OnInit {
       next: (responses: any[][]) => {
         const combined = responses.flat();
         this.globalInvoiceOrders = this.mapOrdersResponse(combined).sort(
-          (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+          (a, b) => this.getOrderTimestamp(b.fecha) - this.getOrderTimestamp(a.fecha)
         );
         this.loadSucursalNames(this.globalInvoiceSucursalIds);
         this.cacheGlobalOrdersByPeriod(this.globalInvoiceOrders);
@@ -333,7 +333,7 @@ export class OrdersComponent implements OnInit {
       next: (responses: any[][]) => {
         const combined = responses.flat();
         const mapped = this.mapOrdersResponse(combined).sort(
-          (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+          (a, b) => this.getOrderTimestamp(b.fecha) - this.getOrderTimestamp(a.fecha)
         );
         this.globalInvoicePeriodCache[periodKey] = { orders: mapped, loaded: true };
         this.globalInvoicePeriodLoading.delete(periodKey);
@@ -358,7 +358,7 @@ export class OrdersComponent implements OnInit {
     const grouped: Record<string, any[]> = {};
 
     orders.forEach(order => {
-      const date = new Date(order.fecha);
+      const date = this.parseOrderDateLocal(order.fecha);
       if (Number.isNaN(date.getTime())) {
         return;
       }
@@ -537,6 +537,41 @@ export class OrdersComponent implements OnInit {
     this.cargarOrdenes();
     this.fetchProductos();
   }
+
+  private readonly mexicoOffset = '-06:00';
+
+  private getNowInMexico(): moment.Moment {
+    return moment.parseZone(moment().utcOffset(this.mexicoOffset).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+  }
+
+  private parseDateInMexico(date: string, endOfDay: boolean = false): moment.Moment {
+    const time = endOfDay ? '23:59:59.999' : '00:00:00.000';
+    return moment.parseZone(`${date}T${time}${this.mexicoOffset}`);
+  }
+
+  private parseOrderMomentMexico(fecha: string | null | undefined): moment.Moment {
+    if (!fecha) {
+      return moment.invalid();
+    }
+    const normalized = /Z|[+-]\d{2}:\d{2}$/.test(fecha) ? fecha : `${fecha}Z`;
+    return moment.utc(normalized).utcOffset(this.mexicoOffset);
+  }
+
+  private parseOrderDateLocal(fecha: string | null | undefined): Date {
+    const parsed = this.parseOrderMomentMexico(fecha);
+    return parsed.isValid() ? parsed.toDate() : new Date(NaN);
+  }
+
+  private getOrderTimestamp(fecha: string | null | undefined): number {
+    const parsed = this.parseOrderMomentMexico(fecha);
+    return parsed.isValid() ? parsed.valueOf() : Number.NaN;
+  }
+
+  formatOrderDateMexico(fecha: string | null | undefined): string {
+    const parsed = this.parseOrderMomentMexico(fecha);
+    return parsed.isValid() ? parsed.format('DD/MM/YYYY HH:mm') : '-';
+  }
+
   logout(): void {
     // Primero limpiar el almacenamiento local
     localStorage.removeItem('currentUser');
@@ -570,7 +605,7 @@ export class OrdersComponent implements OnInit {
         next: (response: any[]) => {
           console.log('Órdenes recibidas:', response);
           this.ordenes = this.mapOrdersResponse(response);
-          this.ordenes.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+          this.ordenes.sort((a, b) => this.getOrderTimestamp(b.fecha) - this.getOrderTimestamp(a.fecha));
           this.paginateOrders();
           this.calculateSalesSummary();
           this.refreshGlobalInvoiceOrders();
@@ -590,7 +625,7 @@ export class OrdersComponent implements OnInit {
   processOrders(orders: any[]): any[] {
     return orders.map((order: any) => {
       if (order?.fecha) {
-        const date = moment.utc(order.fecha).local().toDate();
+        const date = this.parseOrderDateLocal(order.fecha);
         order.fecha = `${date.getFullYear()}-${(date.getMonth() + 1)
           .toString()
           .padStart(2, '0')}-${date.getDate()
@@ -661,7 +696,7 @@ export class OrdersComponent implements OnInit {
               order.productos?.reduce((sum: number, product: any) => sum + (product.cantidad || 0), 0) || 0,
           }));
 
-          this.ordenes.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+          this.ordenes.sort((a, b) => this.getOrderTimestamp(b.fecha) - this.getOrderTimestamp(a.fecha));
           this.paginateOrders();
           this.calculateSalesSummary();
           this.loading = false;
@@ -818,10 +853,13 @@ export class OrdersComponent implements OnInit {
 
   calculateCurrentMonthSummary(): void {
     // Fechas base para comparación
-    const today = moment().startOf('day');
-    const yesterday = moment().subtract(1, 'day').startOf('day');
-    const startOfWeek = moment().startOf('isoWeek');
-    const startOfMonth = moment().startOf('month');
+    const nowMexico = this.getNowInMexico();
+    const today = nowMexico.clone().startOf('day');
+    const yesterday = nowMexico.clone().subtract(1, 'day').startOf('day');
+    const startOfWeek = nowMexico.clone().startOf('isoWeek');
+    const endOfWeek = nowMexico.clone().endOf('isoWeek');
+    const startOfMonth = nowMexico.clone().startOf('month');
+    const endOfMonth = nowMexico.clone().endOf('month');
 
     // Inicializa los contadores
     this.todaySalesCount = 0;
@@ -850,7 +888,10 @@ export class OrdersComponent implements OnInit {
 
     // Procesar las órdenes y calcular el resumen
     this.ordenes.forEach(order => {
-      const orderDate = moment.utc(order.fecha).local(); // Convierte la fecha de la orden desde UTC a Local
+      const orderDate = this.parseOrderMomentMexico(order.fecha);
+      if (!orderDate.isValid()) {
+        return;
+      }
       const orderTotal = order.total || 0; // Total de la orden
 
       // Validar sucursal
@@ -905,7 +946,7 @@ export class OrdersComponent implements OnInit {
       }
 
       // Calcular ventas de la semana
-      if (orderDate.isSameOrAfter(startOfWeek)) {
+      if (orderDate.isBetween(startOfWeek, endOfWeek, undefined, '[]')) {
         this.weekSalesCount++;
         this.weekSalesAmount += orderTotal;
         // Track loyalty discounts separately
@@ -928,7 +969,7 @@ export class OrdersComponent implements OnInit {
       }
 
       // Calcular ventas del mes
-      if (orderDate.isSameOrAfter(startOfMonth)) {
+      if (orderDate.isBetween(startOfMonth, endOfMonth, undefined, '[]')) {
         this.monthSalesCount++;
         this.monthSalesAmount += orderTotal;
         // Track loyalty discounts separately
@@ -998,7 +1039,7 @@ export class OrdersComponent implements OnInit {
         return;
       }
 
-      const orderDate = moment.utc(order.fecha).local().toDate();
+      const orderDate = this.parseOrderDateLocal(order.fecha);
       const dia = orderDate.getDate().toString().padStart(2, '0');
       diasUnicos.add(dia);
 
@@ -1041,36 +1082,43 @@ export class OrdersComponent implements OnInit {
 
   applyFilter(): void {
     this.filteredOrders = this.ordenes.filter(order => {
-      const orderDate = moment.utc(order.fecha).local();
+      const orderDate = this.parseOrderMomentMexico(order.fecha);
+      if (!orderDate.isValid()) {
+        return false;
+      }
       let matchesDateRange = true;
       let matchesPaymentMethod = true;
 
       // Filtrar por rango de fechas
       if (this.filter.startDate && this.filter.endDate) {
-        const startDate = moment(this.filter.startDate);
-        const endDate = moment(this.filter.endDate);
+        const startDate = this.parseDateInMexico(this.filter.startDate);
+        const endDate = this.parseDateInMexico(this.filter.endDate, true);
         matchesDateRange = orderDate.isBetween(startDate, endDate, 'day', '[]');
       }
 
       // Filtrar por períodos específicos
       if (this.filter.today) {
-        const today = moment().startOf('day');
+        const today = this.getNowInMexico().startOf('day');
         matchesDateRange = orderDate.isSame(today, 'day');
       }
 
       if (this.filter.yesterday) {
-        const yesterday = moment().subtract(1, 'day').startOf('day');
+        const yesterday = this.getNowInMexico().subtract(1, 'day').startOf('day');
         matchesDateRange = orderDate.isSame(yesterday, 'day');
       }
 
       if (this.filter.thisWeek) {
-        const startOfWeek = moment().startOf('isoWeek');
-        matchesDateRange = orderDate.isSameOrAfter(startOfWeek);
+        const nowMexico = this.getNowInMexico();
+        const startOfWeek = nowMexico.startOf('isoWeek');
+        const endOfWeek = this.getNowInMexico().endOf('isoWeek');
+        matchesDateRange = orderDate.isBetween(startOfWeek, endOfWeek, 'day', '[]');
       }
 
       if (this.filter.thisMonth) {
-        const startOfMonth = moment().startOf('month');
-        matchesDateRange = orderDate.isSameOrAfter(startOfMonth);
+        const nowMexico = this.getNowInMexico();
+        const startOfMonth = nowMexico.startOf('month');
+        const endOfMonth = this.getNowInMexico().endOf('month');
+        matchesDateRange = orderDate.isBetween(startOfMonth, endOfMonth, 'day', '[]');
       }
 
       // Filtrar por método de pago
@@ -1321,8 +1369,8 @@ export class OrdersComponent implements OnInit {
       return;
     }
 
-    const startDate = moment(this.customStartDate).startOf('day');
-    const endDate = moment(this.customEndDate).endOf('day');
+    const startDate = this.parseDateInMexico(this.customStartDate);
+    const endDate = this.parseDateInMexico(this.customEndDate, true);
 
     if (startDate.isAfter(endDate)) {
       Swal.fire('Error', 'La fecha de inicio no puede ser posterior a la fecha de fin.', 'error');
@@ -1407,14 +1455,14 @@ export class OrdersComponent implements OnInit {
   }
 
   generateCustomTicketFallback(): void {
-    const startDate = moment(this.customStartDate).startOf('day');
-    const endDate = moment(this.customEndDate).endOf('day');
+    const startDate = this.parseDateInMexico(this.customStartDate);
+    const endDate = this.parseDateInMexico(this.customEndDate, true);
     console.log('Usando fallback para corte personalizado');
     console.log('Filtrando desde órdenes locales:', this.ordenes.length);
 
     // Filtrar por rango de fechas Y sucursal desde las órdenes locales
     const filteredOrders = this.ordenes.filter(order => {
-      const orderDate = moment.utc(order.fecha).local();
+      const orderDate = this.parseOrderMomentMexico(order.fecha);
       const cumpleFecha = orderDate.isBetween(startDate, endDate, undefined, '[]');
       const cumpleSucursal = order.sucursal?.id === this.currentSucursalId;
 
@@ -2270,27 +2318,31 @@ export class OrdersComponent implements OnInit {
 
   // Métodos para verificar si una orden es de hoy, ayer, esta semana o este mes (usando hora local)
   isOrderFromToday(dateString: string): boolean {
-    const today = moment().startOf('day');
-    const orderDate = moment.utc(dateString).local().startOf('day');
+    const today = this.getNowInMexico().startOf('day');
+    const orderDate = this.parseOrderMomentMexico(dateString).startOf('day');
     return orderDate.isSame(today, 'day');
   }
 
   isOrderFromYesterday(dateString: string): boolean {
-    const yesterday = moment().subtract(1, 'day').startOf('day');
-    const orderDate = moment.utc(dateString).local().startOf('day');
+    const yesterday = this.getNowInMexico().subtract(1, 'day').startOf('day');
+    const orderDate = this.parseOrderMomentMexico(dateString).startOf('day');
     return orderDate.isSame(yesterday, 'day');
   }
 
   isOrderFromThisWeek(dateString: string): boolean {
-    const startOfWeek = moment().startOf('isoWeek');
-    const orderDate = moment.utc(dateString).local().startOf('day');
-    return orderDate.isSameOrAfter(startOfWeek);
+    const nowMexico = this.getNowInMexico();
+    const startOfWeek = nowMexico.startOf('isoWeek');
+    const endOfWeek = this.getNowInMexico().endOf('isoWeek');
+    const orderDate = this.parseOrderMomentMexico(dateString).startOf('day');
+    return orderDate.isBetween(startOfWeek, endOfWeek, 'day', '[]');
   }
 
   isOrderFromThisMonth(dateString: string): boolean {
-    const startOfMonth = moment().startOf('month');
-    const orderDate = moment.utc(dateString).local().startOf('day');
-    return orderDate.isSameOrAfter(startOfMonth);
+    const nowMexico = this.getNowInMexico();
+    const startOfMonth = nowMexico.startOf('month');
+    const endOfMonth = this.getNowInMexico().endOf('month');
+    const orderDate = this.parseOrderMomentMexico(dateString).startOf('day');
+    return orderDate.isBetween(startOfMonth, endOfMonth, 'day', '[]');
   }
 
 
@@ -2757,7 +2809,7 @@ export class OrdersComponent implements OnInit {
     const useGlobal = options?.useGlobal ?? false;
 
     const ordenesMes = dataset.filter(order => {
-      const orderDate = new Date(order.fecha);
+      const orderDate = this.parseOrderDateLocal(order.fecha);
       const mesOrden = (orderDate.getMonth() + 1).toString().padStart(2, '0');
       const anioOrden = orderDate.getFullYear();
       const sucursalValida = useGlobal
@@ -2776,7 +2828,7 @@ export class OrdersComponent implements OnInit {
     const totalVendido = ordenesMes.reduce((sum, order) => sum + (order.total || 0), 0);
     const totalFacturado = (options?.orders ?? this.ordenes)
       .filter(order => {
-        const orderDate = new Date(order.fecha);
+        const orderDate = this.parseOrderDateLocal(order.fecha);
         const mesOrden = (orderDate.getMonth() + 1).toString().padStart(2, '0');
         const anioOrden = orderDate.getFullYear();
         const sucursalValida = useGlobal
@@ -2963,7 +3015,7 @@ export class OrdersComponent implements OnInit {
       const anioSeleccionado = this.anioActual;
 
       const ventasFiltradas = ventasNoFacturadas.filter(order => {
-        const orderDate = new Date(order.fecha);
+        const orderDate = this.parseOrderDateLocal(order.fecha);
         const mes = (orderDate.getMonth() + 1).toString().padStart(2, '0');
         const anio = orderDate.getFullYear();
         return mes === mesSeleccionado && anio === anioSeleccionado;
@@ -3065,7 +3117,7 @@ export class OrdersComponent implements OnInit {
 
     // Obtener mes y año de la primera venta seleccionada
     const primerVenta = ventasAIncluir[0];
-    const fechaVenta = new Date(primerVenta.fecha);
+    const fechaVenta = this.parseOrderDateLocal(primerVenta.fecha);
     const mes = (fechaVenta.getMonth() + 1).toString().padStart(2, '0');
     const anio = fechaVenta.getFullYear().toString();
 

@@ -553,7 +553,12 @@ export class OrdersComponent implements OnInit {
     if (!fecha) {
       return moment.invalid();
     }
-    const normalized = /Z|[+-]\d{2}:\d{2}$/.test(fecha) ? fecha : `${fecha}Z`;
+    // Forzamos interpretación uniforme: el valor almacenado en BD se trata como UTC naive.
+    // Esto evita mezclas cuando el payload llega con/ sin offset.
+    const normalized = fecha
+      .trim()
+      .replace(' ', 'T')
+      .replace(/(Z|[+-]\d{2}:\d{2})$/, '');
     return moment.utc(normalized).utcOffset(this.mexicoOffset);
   }
 
@@ -564,7 +569,7 @@ export class OrdersComponent implements OnInit {
 
   private getOrderTimestamp(fecha: string | null | undefined): number {
     const parsed = this.parseOrderMomentMexico(fecha);
-    return parsed.isValid() ? parsed.valueOf() : Number.NaN;
+    return parsed.isValid() ? parsed.valueOf() : Number.NEGATIVE_INFINITY;
   }
 
   formatOrderDateMexico(fecha: string | null | undefined): string {

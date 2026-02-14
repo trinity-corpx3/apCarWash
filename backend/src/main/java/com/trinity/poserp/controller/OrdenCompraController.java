@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -159,10 +160,9 @@ public class OrdenCompraController {
                 return new ResponseEntity<>("El nombre de la sucursal es obligatorio.", HttpStatus.BAD_REQUEST);
             }
 
-            // Guardar la fecha en UTC tal cual viene del frontend
-            // LocalDateTime fechaLocal = ajustarFechaZonaHoraria(ordenCompraDto.getFecha(),
-            // "America/Mexico_City");
-            // ordenCompraDto.setFecha(fechaLocal);
+            // Fuente de verdad: siempre usar hora del backend en UTC para persistencia.
+            // La UI convierte este valor a America/Mexico_City al mostrarlo.
+            ordenCompraDto.setFecha(LocalDateTime.now(ZoneOffset.UTC));
 
             // Guardar la orden de compra
             OrdenCompra newOrder = ordenCompraService.save(ordenCompraDto);

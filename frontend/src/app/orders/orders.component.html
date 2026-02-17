@@ -272,10 +272,10 @@
                 </button>
               </td>
               <td class="actions">
-                <button class="btn btn-sm btn-outline-primary me-2" (click)="generateTicket(orden)">
+                <button class="btn btn-sm btn-outline-primary mb-1 w-100" (click)="generateTicket(orden)">
                   Ver Ticket
                 </button>
-                <button class="btn btn-sm btn-outline-danger" *ngIf="orden.estado !== 'cancelado'" (click)="cancelarOrden(orden)">
+                <button class="btn btn-sm btn-outline-danger w-100" *ngIf="orden.estado !== 'cancelado'" (click)="cancelarOrden(orden)">
                   Cancelar
                 </button>
               </td>

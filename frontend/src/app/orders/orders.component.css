@@ -390,7 +390,8 @@
 
 .table td.actions {
   text-align: center;
-  white-space: nowrap;
+  white-space: normal;
+  overflow: visible;
   vertical-align: middle;
   padding: 8px 4px;
 }
@@ -399,7 +400,8 @@
   padding: 3px 8px;
   font-size: 0.7rem;
   white-space: nowrap;
-  margin: 0 2px;
+  display: block;
+  margin: 2px auto;
 }
 
 .table tbody tr:nth-child(even) {

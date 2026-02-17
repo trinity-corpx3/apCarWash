@@ -368,4 +368,17 @@ public class OrdenCompraService {
         return ordenCompraRepository.save(order);
     }
 
+    @Transactional
+    public OrdenCompra cancelarOrden(Long id) {
+        OrdenCompra orden = ordenCompraRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Orden no encontrada con ID: " + id));
+
+        if ("cancelado".equals(orden.getEstado())) {
+            throw new IllegalStateException("La orden ya se encuentra cancelada.");
+        }
+
+        orden.setEstado("cancelado");
+        return ordenCompraRepository.save(orden);
+    }
+
 }

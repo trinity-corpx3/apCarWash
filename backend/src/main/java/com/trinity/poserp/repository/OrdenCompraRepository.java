@@ -50,7 +50,7 @@ public interface OrdenCompraRepository extends JpaRepository<OrdenCompra, Long> 
         @Query("SELECT o FROM OrdenCompra o WHERE o.numeroRecibo = :numeroRecibo")
         Optional<OrdenCompra> findByNumeroRecibo(@Param("numeroRecibo") String numeroRecibo);
 
-        @Query(value = "SELECT SUM(o.total) as totalVendido, SUM(CASE WHEN o.facturada = true THEN o.total ELSE 0 END) as totalFacturado, SUM(CASE WHEN o.facturada = false THEN o.total ELSE 0 END) as totalNoFacturado FROM ordenes_compra o WHERE o.sucursal_id = :sucursalId AND EXTRACT(MONTH FROM o.fecha) = :mes AND EXTRACT(YEAR FROM o.fecha) = :anio", nativeQuery = true)
+        @Query(value = "SELECT SUM(o.total) as totalVendido, SUM(CASE WHEN o.facturada = true THEN o.total ELSE 0 END) as totalFacturado, SUM(CASE WHEN o.facturada = false THEN o.total ELSE 0 END) as totalNoFacturado FROM ordenes_compra o WHERE o.sucursal_id = :sucursalId AND EXTRACT(MONTH FROM o.fecha) = :mes AND EXTRACT(YEAR FROM o.fecha) = :anio AND o.estado NOT IN ('anulado','cancelado')", nativeQuery = true)
         Map<String, Object> obtenerResumenMes(@Param("sucursalId") Long sucursalId, @Param("mes") int mes,
                         @Param("anio") int anio);
 
@@ -62,7 +62,7 @@ public interface OrdenCompraRepository extends JpaRepository<OrdenCompra, Long> 
         @Query(value = "SELECT DATE(o.fecha) AS dia, SUM(o.total) AS subtotal, COALESCE(SUM(o.loyalty_discount_amount),0) AS descuentos, COUNT(*) AS tickets "
                         +
                         "FROM ordenes_compra o " +
-                        "WHERE DATE(o.fecha) BETWEEN DATE(:start) AND DATE(:end) AND o.estado <> 'anulado' "
+                        "WHERE DATE(o.fecha) BETWEEN DATE(:start) AND DATE(:end) AND o.estado NOT IN ('anulado','cancelado') "
                         +
                         "GROUP BY DATE(o.fecha) ORDER BY dia", nativeQuery = true)
         List<Object[]> aggregateDailyGlobal(@Param("start") String start, @Param("end") String end);
@@ -70,7 +70,7 @@ public interface OrdenCompraRepository extends JpaRepository<OrdenCompra, Long> 
         // Agregados diarios por sucursal (rango de fechas, fecha ya en hora MX)
         @Query(value = "SELECT DATE(o.fecha) AS dia, SUM(o.total) AS subtotal, COALESCE(SUM(o.loyalty_discount_amount),0) AS descuentos, COUNT(*) AS tickets "
                         + "FROM ordenes_compra o "
-                        + "WHERE DATE(o.fecha) BETWEEN DATE(:start) AND DATE(:end) AND o.estado <> 'anulado' AND o.sucursal_id = :sucursalId "
+                        + "WHERE DATE(o.fecha) BETWEEN DATE(:start) AND DATE(:end) AND o.estado NOT IN ('anulado','cancelado') AND o.sucursal_id = :sucursalId "
                         + "GROUP BY DATE(o.fecha) ORDER BY dia", nativeQuery = true)
         List<Object[]> aggregateDailyBySucursal(@Param("start") String start, @Param("end") String end,
                         @Param("sucursalId") Long sucursalId);
@@ -88,15 +88,15 @@ public interface OrdenCompraRepository extends JpaRepository<OrdenCompra, Long> 
         Map<String, Object> getEstadisticasDia(@Param("sucursalId") Long sucursalId);
 
         // Obtener órdenes por placa con paginación
-        @Query("SELECT o FROM OrdenCompra o WHERE o.placa = :placa AND o.estado <> 'anulado' ORDER BY o.fecha DESC")
+        @Query("SELECT o FROM OrdenCompra o WHERE o.placa = :placa AND o.estado NOT IN ('anulado','cancelado') ORDER BY o.fecha DESC")
         List<OrdenCompra> findByPlaca(@Param("placa") String placa);
 
         // Contar órdenes por placa
-        @Query("SELECT COUNT(o) FROM OrdenCompra o WHERE o.placa = :placa AND o.estado <> 'anulado'")
+        @Query("SELECT COUNT(o) FROM OrdenCompra o WHERE o.placa = :placa AND o.estado NOT IN ('anulado','cancelado')")
         Long countByPlaca(@Param("placa") String placa);
 
         // Obtener órdenes por placa en rango de fechas (fecha ya en hora MX)
-        @Query(value = "SELECT * FROM ordenes_compra o WHERE o.placa = :placa AND o.estado <> 'anulado' AND DATE(o.fecha) >= DATE(:fechaInicio) AND DATE(o.fecha) <= DATE(:fechaFin) ORDER BY o.fecha DESC", nativeQuery = true)
+        @Query(value = "SELECT * FROM ordenes_compra o WHERE o.placa = :placa AND o.estado NOT IN ('anulado','cancelado') AND DATE(o.fecha) >= DATE(:fechaInicio) AND DATE(o.fecha) <= DATE(:fechaFin) ORDER BY o.fecha DESC", nativeQuery = true)
         List<OrdenCompra> findByPlacaAndDateRange(@Param("placa") String placa,
                         @Param("fechaInicio") String fechaInicio, @Param("fechaFin") String fechaFin);
 
@@ -107,7 +107,7 @@ public interface OrdenCompraRepository extends JpaRepository<OrdenCompra, Long> 
                         "COALESCE(SUM(o.loyalty_discount_amount), 0) as totalDescuentos, " +
                         "COUNT(CASE WHEN o.loyalty_applied = true THEN 1 END) as descuentosAplicados " +
                         "FROM ordenes_compra o " +
-                        "WHERE o.placa = :placa AND o.estado <> 'anulado'", nativeQuery = true)
+                        "WHERE o.placa = :placa AND o.estado NOT IN ('anulado','cancelado')", nativeQuery = true)
         Map<String, Object> getEstadisticasPlaca(@Param("placa") String placa);
 
 }

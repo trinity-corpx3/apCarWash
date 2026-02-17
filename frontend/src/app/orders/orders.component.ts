@@ -94,6 +94,16 @@ export class OrdersComponent implements OnInit {
   monthDiscount7thAmount: number = 0;
   monthDiscount7thCount: number = 0;
 
+  // Canceladas
+  todayCancelledCount: number = 0;
+  todayCancelledAmount: number = 0;
+  yesterdayCancelledCount: number = 0;
+  yesterdayCancelledAmount: number = 0;
+  weekCancelledCount: number = 0;
+  weekCancelledAmount: number = 0;
+  monthCancelledCount: number = 0;
+  monthCancelledAmount: number = 0;
+
   // Totales netos
   todayNetAmount: number = 0;
   yesterdayNetAmount: number = 0;
@@ -843,6 +853,41 @@ export class OrdersComponent implements OnInit {
     }
   }
 
+  cancelarOrden(orden: any): void {
+    if (orden.estado === 'cancelado') {
+      Swal.fire('Info', 'Esta venta ya se encuentra cancelada.', 'info');
+      return;
+    }
+
+    Swal.fire({
+      title: '¿Cancelar esta venta?',
+      html: `<p>Recibo: <strong>${orden.numeroRecibo}</strong></p>
+             <p>Total: <strong>$${(orden.total || 0).toFixed(2)}</strong></p>
+             <p class="text-muted">La venta seguirá siendo visible pero <strong>no contará</strong> en los cortes de ningún periodo.</p>`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, cancelar venta',
+      cancelButtonText: 'No, mantener'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const headers = this.buildAuthHeaders();
+        this.http.post(`${this.apiUrl}/ordenes-compra/${orden.id}/cancelar`, {}, { headers }).subscribe({
+          next: () => {
+            orden.estado = 'cancelado';
+            this.calculateSalesSummary();
+            Swal.fire('Cancelada', 'La venta ha sido cancelada correctamente.', 'success');
+          },
+          error: (err) => {
+            console.error('Error al cancelar orden:', err);
+            Swal.fire('Error', 'No se pudo cancelar la venta. Intenta de nuevo.', 'error');
+          }
+        });
+      }
+    });
+  }
+
   calculateSalesSummary(): void {
     if (this.currentSucursalId === null) {
       console.error('Sucursal actual no definida. No se pueden calcular los resúmenes de ventas.');
@@ -892,6 +937,11 @@ export class OrdersComponent implements OnInit {
     this.yesterdayDiscount7thAmount = 0; this.yesterdayDiscount7thCount = 0;
     this.weekDiscount7thAmount = 0; this.weekDiscount7thCount = 0;
     this.monthDiscount7thAmount = 0; this.monthDiscount7thCount = 0;
+    // Canceladas
+    this.todayCancelledCount = 0; this.todayCancelledAmount = 0;
+    this.yesterdayCancelledCount = 0; this.yesterdayCancelledAmount = 0;
+    this.weekCancelledCount = 0; this.weekCancelledAmount = 0;
+    this.monthCancelledCount = 0; this.monthCancelledAmount = 0;
 
     // Procesar las órdenes y calcular el resumen
     this.ordenes.forEach(order => {
@@ -899,11 +949,21 @@ export class OrdersComponent implements OnInit {
       if (!orderDate.isValid()) {
         return;
       }
-      const orderTotal = order.total || 0; // Total de la orden
+      const orderTotal = order.total || 0;
+      const isCancelled = order.estado === 'cancelado';
 
       // Validar sucursal
       if (order.sucursal?.id !== this.currentSucursalId) {
-        return; // Ignorar órdenes de otras sucursales
+        return;
+      }
+
+      // Contabilizar canceladas por periodo (sin sumar a los totales regulares)
+      if (isCancelled) {
+        if (orderDate.isSame(today, 'day')) { this.todayCancelledCount++; this.todayCancelledAmount += orderTotal; }
+        if (orderDate.isSame(yesterday, 'day')) { this.yesterdayCancelledCount++; this.yesterdayCancelledAmount += orderTotal; }
+        if (orderDate.isBetween(startOfWeek, endOfWeek, undefined, '[]')) { this.weekCancelledCount++; this.weekCancelledAmount += orderTotal; }
+        if (orderDate.isBetween(startOfMonth, endOfMonth, undefined, '[]')) { this.monthCancelledCount++; this.monthCancelledAmount += orderTotal; }
+        return; // No sumar al corte regular
       }
 
       // Calcular ventas de hoy
@@ -1034,6 +1094,10 @@ export class OrdersComponent implements OnInit {
     this.monthDiscount7thAmount = 0;
     this.monthDiscount7thCount = 0;
 
+    // Canceladas
+    this.monthCancelledCount = 0;
+    this.monthCancelledAmount = 0;
+
     this.diasConVentas = 0;
     this.totalMesHistorico = 0;
 
@@ -1041,8 +1105,16 @@ export class OrdersComponent implements OnInit {
     const diasUnicos = new Set<string>();
 
     this.ordenes.forEach(order => {
-      // Validar sucursal (aunque el backend ya filtra, mantenemos consistencia)
       if (order.sucursal?.id !== this.currentSucursalId) {
+        return;
+      }
+
+      const orderTotal = order.total || 0;
+
+      // Contabilizar canceladas aparte
+      if (order.estado === 'cancelado') {
+        this.monthCancelledCount++;
+        this.monthCancelledAmount += orderTotal;
         return;
       }
 
@@ -1050,7 +1122,6 @@ export class OrdersComponent implements OnInit {
       const dia = orderDate.getDate().toString().padStart(2, '0');
       diasUnicos.add(dia);
 
-      const orderTotal = order.total || 0;
       this.monthSalesCount++;
       this.monthSalesAmount += orderTotal;
 
@@ -1561,8 +1632,15 @@ export class OrdersComponent implements OnInit {
     doc.text(`DESCUENTOS 6ª: -$${totalDiscounts.toFixed(2)} (${discountCount})`, 5, yPosition += lineHeight);
     doc.text(`TOTAL NETO: $${totalNet.toFixed(2)}`, 5, yPosition += lineHeight);
 
+    // Sección de canceladas
+    const cancelledCountPdf = Number(ticketData?.cancelledCount || 0);
+    const cancelledAmountPdf = Number(ticketData?.cancelledAmount || 0);
+    if (cancelledCountPdf > 0) {
+      doc.text(`CANCELADAS: ${cancelledCountPdf} (-$${cancelledAmountPdf.toFixed(2)})`, 5, yPosition += lineHeight);
+    }
+
     // ===========================
-    // ✅ Detalle de productos
+    // Detalle de productos
     // ===========================
     yPosition += 10;
     doc.setFont('helvetica', 'bold');
@@ -1634,7 +1712,11 @@ export class OrdersComponent implements OnInit {
   processTicketData(orders: any[]): any {
     console.log('Procesando datos de ticket para', orders.length, 'órdenes');
 
-    const totalVendido = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+    // Separar activas y canceladas
+    const activeOrders = orders.filter(o => o.estado !== 'cancelado');
+    const cancelledOrders = orders.filter(o => o.estado === 'cancelado');
+
+    const totalVendido = activeOrders.reduce((sum, order) => sum + (order.total || 0), 0);
     const paymentMethods = {
       cash: 0,
       credit: 0,
@@ -1643,10 +1725,8 @@ export class OrdersComponent implements OnInit {
     let totalDiscounts = 0;
     let discountCount = 0;
 
-    // Crear un mapa para productos (inicializar con catálogo si está disponible)
     const productMap: { [key: number]: { name: string; quantity: number; total: number } } = {};
 
-    // Inicializar el mapa con los productos del catálogo si están disponibles
     if (this.productos && this.productos.length > 0) {
       this.productos.forEach(product => {
         productMap[product.id] = {
@@ -1657,15 +1737,12 @@ export class OrdersComponent implements OnInit {
       });
     }
 
-    let totalSales = orders.length;
-    let totalItems = 0; // Inicializar el total de ítems vendidos
+    let totalSales = activeOrders.length;
+    let totalItems = 0;
 
-    // Obtener la sucursal del primer pedido (asumiendo que todos son de la misma sucursal)
     const branch = orders.length > 0 ? orders[0].sucursal?.nombre : 'N/A';
 
-    // Procesar las órdenes
-    orders.forEach(order => {
-      // Actualizar métodos de pago
+    activeOrders.forEach(order => {
       const metodo = (order.metodoPago || '').toLowerCase();
       if (metodo === 'efectivo') {
         paymentMethods.cash += order.total || 0;
@@ -1675,7 +1752,6 @@ export class OrdersComponent implements OnInit {
         paymentMethods.debit += order.total || 0;
       }
 
-      // Sumar todos los tipos de descuentos
       let orderDiscount = 0;
       if (order.descuento6taVisitaAplicado) {
         orderDiscount += Number(order.descuento6taVisitaMonto || 0);
@@ -1692,15 +1768,13 @@ export class OrdersComponent implements OnInit {
         discountCount++;
       }
 
-      // Procesar los productos vendidos en la orden
       order.productos?.forEach((product: any) => {
-        const productId = product.producto?.id; // Accede al ID correcto del producto
+        const productId = product.producto?.id;
         const cantidad = product.cantidad || 0;
         const precio = product.precioProducto || 0;
         const nombreProducto = product.nombreProducto || product.producto?.nombre || `Producto ${productId}`;
 
         if (!isNaN(productId) && productId) {
-          // Si el producto no existe en el mapa, agregarlo
           if (!productMap[productId]) {
             productMap[productId] = {
               name: nombreProducto,
@@ -1709,16 +1783,15 @@ export class OrdersComponent implements OnInit {
             };
           }
 
-          productMap[productId].quantity += cantidad; // Actualiza la cantidad
-          productMap[productId].total += cantidad * precio; // Actualiza el total
-          totalItems += cantidad; // Sumar al total de ítems vendidos
+          productMap[productId].quantity += cantidad;
+          productMap[productId].total += cantidad * precio;
+          totalItems += cantidad;
         } else {
           console.warn(`Producto con ID inválido o no encontrado:`, product);
         }
       });
     });
 
-    // Convertir el mapa a un arreglo para ordenarlos y mostrarlos
     const items = Object.keys(productMap).map(key => ({
       id: Number(key),
       name: productMap[Number(key)].name,
@@ -1726,16 +1799,22 @@ export class OrdersComponent implements OnInit {
       total: productMap[Number(key)].total,
     }));
 
+    // Resumen de canceladas
+    const cancelledCount = cancelledOrders.length;
+    const cancelledAmount = cancelledOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+
     return {
       total: totalVendido,
       paymentMethods,
-      items: items.sort((a, b) => a.id - b.id), // Lista de productos con cantidades y totales actualizados
+      items: items.sort((a, b) => a.id - b.id),
       totalSales,
-      totalItems, // Incluye el total de ítems vendidos
+      totalItems,
       branch,
       totalDiscounts,
       discountCount,
-      totalNet: +(totalVendido - totalDiscounts)
+      totalNet: +(totalVendido - totalDiscounts),
+      cancelledCount,
+      cancelledAmount
     };
   }
 
@@ -1865,6 +1944,12 @@ export class OrdersComponent implements OnInit {
     yPosition += lineHeight;
     if (ticketData.totalNet !== undefined) {
       doc.text(`TOTAL NETO: $${ticketData.totalNet.toFixed(2)}`, 5, yPosition);
+      yPosition += lineHeight;
+    }
+
+    // Canceladas
+    if (ticketData.cancelledCount > 0) {
+      doc.text(`CANCELADAS: ${ticketData.cancelledCount} (-$${(ticketData.cancelledAmount || 0).toFixed(2)})`, 5, yPosition);
       yPosition += lineHeight;
     }
 
@@ -2146,6 +2231,13 @@ export class OrdersComponent implements OnInit {
     doc.text(`DESCUENTOS 6ª: -$${totalDiscounts.toFixed(2)} (${discountCount})`, 5, yPosition += lineHeight);
     doc.text(`TOTAL NETO: $${totalNet.toFixed(2)}`, 5, yPosition += lineHeight);
 
+    // Sección de canceladas
+    const cancelledCountTicket = Number(ticketData?.cancelledCount || 0);
+    const cancelledAmountTicket = Number(ticketData?.cancelledAmount || 0);
+    if (cancelledCountTicket > 0) {
+      doc.text(`CANCELADAS: ${cancelledCountTicket} (-$${cancelledAmountTicket.toFixed(2)})`, 5, yPosition += lineHeight);
+    }
+
     yPosition += 10;
     doc.setFont('helvetica', 'bold');
     doc.text('DETALLE DE PRODUCTOS:', 5, yPosition);
@@ -2202,7 +2294,7 @@ export class OrdersComponent implements OnInit {
     }
 
     // Filtrar órdenes por sucursal y período
-    const data = this.ordenes.filter(order => {
+    const allData = this.ordenes.filter(order => {
       return (
         order.sucursal?.id === this.currentSucursalId &&
         (
@@ -2214,16 +2306,18 @@ export class OrdersComponent implements OnInit {
       );
     });
 
-    // Inicializar variables para el resumen
+    // Separar activas y canceladas
+    const data = allData.filter(o => o.estado !== 'cancelado');
+    const cancelledOrders = allData.filter(o => o.estado === 'cancelado');
+
     const paymentMethods = { cash: 0, credit: 0, debit: 0 };
     let total = 0;
-    let totalItems = 0; // Nueva variable para contar el total de ítems vendidos
-    let totalDiscounts = 0; // Total descuentos 6ª
-    let discountCount = 0; // Conteo de ventas con descuento
+    let totalItems = 0;
+    let totalDiscounts = 0;
+    let discountCount = 0;
 
     const productMap: { [key: number]: { name: string; quantity: number; total: number } } = {};
 
-    // Inicializar el mapa con los productos
     this.productos.forEach(product => {
       productMap[product.id] = {
         name: product.nombre,
@@ -2232,11 +2326,9 @@ export class OrdersComponent implements OnInit {
       };
     });
 
-    // Procesar las órdenes
     data.forEach(order => {
       total += order.total || 0;
 
-      // Sumar todos los tipos de descuentos
       let orderDiscount = 0;
       if (order.descuento6taVisitaAplicado) {
         orderDiscount += Number(order.descuento6taVisitaMonto || 0);
@@ -2253,7 +2345,6 @@ export class OrdersComponent implements OnInit {
         discountCount++;
       }
 
-      // Actualizar métodos de pago
       const metodo = (order.metodoPago || '').toLowerCase();
       if (metodo === 'efectivo') {
         paymentMethods.cash += order.total || 0;
@@ -2263,13 +2354,12 @@ export class OrdersComponent implements OnInit {
         paymentMethods.debit += order.total || 0;
       }
 
-      // Procesar productos vendidos
       order.productos?.forEach((product: any) => {
         const productId = product.producto?.id;
         const cantidad = product.cantidad || 0;
         const precio = product.precioProducto || 0;
 
-        totalItems += cantidad; // Incrementar el total de ítems vendidos
+        totalItems += cantidad;
 
         if (productMap[productId]) {
           productMap[productId].quantity += cantidad;
@@ -2278,7 +2368,6 @@ export class OrdersComponent implements OnInit {
       });
     });
 
-    // Convertir el mapa en un arreglo y ordenarlo
     const items = Object.keys(productMap).map(key => ({
       id: Number(key),
       name: productMap[Number(key)].name,
@@ -2286,15 +2375,20 @@ export class OrdersComponent implements OnInit {
       total: productMap[Number(key)].total,
     }));
 
+    const cancelledCount = cancelledOrders.length;
+    const cancelledAmount = cancelledOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+
     return {
       total,
       paymentMethods,
-      items: items.sort((a, b) => a.id - b.id), // Ordenar productos por ID
+      items: items.sort((a, b) => a.id - b.id),
       totalSales: data.length,
-      totalItems, // Agregar el total de ítems vendidos
+      totalItems,
       totalDiscounts,
       discountCount,
-      totalNet: +(total - totalDiscounts)
+      totalNet: +(total - totalDiscounts),
+      cancelledCount,
+      cancelledAmount
     };
   }
 

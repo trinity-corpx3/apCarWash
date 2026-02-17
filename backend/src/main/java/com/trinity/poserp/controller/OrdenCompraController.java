@@ -201,6 +201,27 @@ public class OrdenCompraController {
         }
     }
 
+    // Cancelar una orden de compra (cancelación lógica)
+    @PostMapping("/{id}/cancelar")
+    public ResponseEntity<?> cancelarOrden(@PathVariable Long id) {
+        try {
+            OrdenCompra orden = ordenCompraService.cancelarOrden(id);
+            return ResponseEntity.ok(Map.of(
+                    "message", "Orden cancelada correctamente.",
+                    "success", true,
+                    "id", orden.getId(),
+                    "estado", orden.getEstado()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error al cancelar la orden: " + e.getMessage()));
+        }
+    }
+
     // Contar ventas por placa
     @GetMapping("/ventas-por-placa/{placa}")
     public ResponseEntity<Integer> contarVentasPorPlaca(@PathVariable String placa) {

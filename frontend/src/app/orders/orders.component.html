@@ -33,6 +33,9 @@
         <small class="text-muted d-block" *ngIf="todayDiscount7thCount > 0">
           🎉 Desc. 7ma (GRATIS): -${{ todayDiscount7thAmount | number:'1.2-2' }} ({{ todayDiscount7thCount }})
         </small>
+        <small class="text-danger d-block" *ngIf="todayCancelledCount > 0">
+          ❌ Canceladas: {{ todayCancelledCount }} (${{ todayCancelledAmount | number:'1.2-2' }})
+        </small>
         <div class="actions">
           <button (click)="exportToCSV('today')" class="btn btn-sm btn-outline-success">Exportar CSV</button>
           <button (click)="generateTicket('today')" class="btn btn-sm btn-outline-primary">Generar Ticket</button>
@@ -49,6 +52,9 @@
         </small>
         <small class="text-muted d-block" *ngIf="yesterdayDiscount7thCount > 0">
           🎉 Desc. 7ma (GRATIS): -${{ yesterdayDiscount7thAmount | number:'1.2-2' }} ({{ yesterdayDiscount7thCount }})
+        </small>
+        <small class="text-danger d-block" *ngIf="yesterdayCancelledCount > 0">
+          ❌ Canceladas: {{ yesterdayCancelledCount }} (${{ yesterdayCancelledAmount | number:'1.2-2' }})
         </small>
         <div class="actions">
           <button (click)="exportToCSV('yesterday')" class="btn btn-sm btn-outline-success">Exportar CSV</button>
@@ -67,6 +73,9 @@
         <small class="text-muted d-block" *ngIf="weekDiscount7thCount > 0">
           🎉 Desc. 7ma (GRATIS): -${{ weekDiscount7thAmount | number:'1.2-2' }} ({{ weekDiscount7thCount }})
         </small>
+        <small class="text-danger d-block" *ngIf="weekCancelledCount > 0">
+          ❌ Canceladas: {{ weekCancelledCount }} (${{ weekCancelledAmount | number:'1.2-2' }})
+        </small>
         <div class="actions">
           <button (click)="exportToCSV('week')" class="btn btn-sm btn-outline-success">Exportar CSV</button>
           <button (click)="generateTicket('week')" class="btn btn-sm btn-outline-primary">Generar Ticket</button>
@@ -83,6 +92,9 @@
         </small>
         <small class="text-muted d-block" *ngIf="monthDiscount7thCount > 0">
           🎉 Desc. 7ma (GRATIS): -${{ monthDiscount7thAmount | number:'1.2-2' }} ({{ monthDiscount7thCount }})
+        </small>
+        <small class="text-danger d-block" *ngIf="monthCancelledCount > 0">
+          ❌ Canceladas: {{ monthCancelledCount }} (${{ monthCancelledAmount | number:'1.2-2' }})
         </small>
         <div class="actions">
           <button (click)="exportToCSV(isHistoricalView ? 'historical' : 'month')"
@@ -209,7 +221,7 @@
             </td>
           </tr>
           <ng-container *ngFor="let orden of paginatedOrders">
-            <tr>
+            <tr [class.table-danger]="orden.estado === 'cancelado'" [style.opacity]="orden.estado === 'cancelado' ? '0.6' : '1'">
               <td>{{ orden.id }}</td>
               <td>
                 {{ orden.numeroRecibo }}
@@ -239,7 +251,11 @@
               <td>{{ orden.cajero }}</td>
               <td>
                 <span class="badge"
-                  [ngClass]="{'bg-success': orden.estado === 'Completada', 'bg-warning': orden.estado !== 'Completada'}">
+                  [ngClass]="{
+                    'bg-success': orden.estado === 'completado' || orden.estado === 'Completada',
+                    'bg-danger': orden.estado === 'cancelado',
+                    'bg-warning': orden.estado !== 'completado' && orden.estado !== 'Completada' && orden.estado !== 'cancelado'
+                  }">
                   {{ orden.estado }}
                 </span>
               </td>
@@ -259,9 +275,9 @@
                 <button class="btn btn-sm btn-outline-primary me-2" (click)="generateTicket(orden)">
                   Ver Ticket
                 </button>
-                <!-- <button class="btn btn-sm btn-outline-success" [disabled]="orden.facturada" (click)="facturarOrden(orden)">
-                      Facturar
-                    </button> -->
+                <button class="btn btn-sm btn-outline-danger" *ngIf="orden.estado !== 'cancelado'" (click)="cancelarOrden(orden)">
+                  Cancelar
+                </button>
               </td>
             </tr>
             <tr *ngIf="orden.showDetails">

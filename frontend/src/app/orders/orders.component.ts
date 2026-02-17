@@ -534,7 +534,7 @@ export class OrdersComponent implements OnInit {
     if (userData) {
       this.userName = userData.nombreCompleto || 'Usuario no identificado';
       this.userEmail = userData.email || 'Correo no disponible';
-      this.userRole = userData.rol?.nombre || 'Rol no asignado';
+      this.userRole = typeof userData.rol === 'string' ? userData.rol : (userData.rol?.nombre || 'Rol no asignado');
     } else {
       console.error('No se pudo obtener la información del usuario.');
     }

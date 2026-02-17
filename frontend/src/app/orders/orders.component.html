@@ -275,7 +275,7 @@
                 <button class="btn btn-sm btn-outline-primary mb-1 w-100" (click)="generateTicket(orden)">
                   Ver Ticket
                 </button>
-                <button class="btn btn-sm btn-outline-danger w-100" *ngIf="orden.estado !== 'cancelado' && userRole === 'Super Admin'" (click)="cancelarOrden(orden)">
+                <button class="btn btn-sm btn-outline-danger w-100" *ngIf="orden.estado !== 'cancelado' && userRole.toLowerCase() === 'super admin'" (click)="cancelarOrden(orden)">
                   Cancelar
                 </button>
               </td>

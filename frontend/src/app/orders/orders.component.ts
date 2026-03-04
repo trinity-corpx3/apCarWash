@@ -1095,8 +1095,8 @@ export class OrdersComponent implements OnInit {
 
     // Procesar gastos para restar a la ganancia
     this.gastos.forEach(gasto => {
-      // Solo contar gastos que no estén anulados
-      if ((gasto.status || '').toLowerCase() === 'anulado') return;
+      // Solo contar gastos que estén pagados
+      if ((gasto.status || '').toLowerCase() !== 'pagado') return;
 
       const gastoDate = moment(gasto.date);
       const gastoMonto = Number(gasto.amountMxn || 0);
@@ -1204,8 +1204,8 @@ export class OrdersComponent implements OnInit {
     this.monthExpensesAmount = 0;
 
     this.gastos.forEach(gasto => {
-      // Filtrar histórico, solo importa si no está anulado y pertenece al mes
-      if ((gasto.status || '').toLowerCase() === 'anulado') return;
+      // Filtrar histórico, solo importa si está pagado y pertenece al mes
+      if ((gasto.status || '').toLowerCase() !== 'pagado') return;
 
       const gastoDate = moment(gasto.date);
       if (gastoDate.year() === Number(this.selectedHistoricalYear) && (gastoDate.month() + 1) === Number(this.selectedHistoricalMonth)) {
@@ -1655,7 +1655,7 @@ export class OrdersComponent implements OnInit {
     const endDate = this.parseDateInMexico(this.customEndDate, true);
 
     this.gastos.forEach(gasto => {
-      if ((gasto.status || '').toLowerCase() === 'anulado') return;
+      if ((gasto.status || '').toLowerCase() !== 'pagado') return;
       const gastoDate = moment(gasto.date);
       if (gastoDate.isBetween(startDate, endDate, undefined, '[]')) {
         customExpensesAmount += Number(gasto.amountMxn || 0);
@@ -2029,8 +2029,14 @@ export class OrdersComponent implements OnInit {
     const discountCount = Number(ticketData.discountCount || 0);
     doc.text(`DESCUENTOS 6ª: -$${discounts.toFixed(2)} (${discountCount})`, 5, yPosition);
     yPosition += lineHeight;
+
+    if (ticketData.periodExpenses !== undefined) {
+      doc.text(`GASTOS DEL PERIODO: -$${Number(ticketData.periodExpenses).toFixed(2)}`, 5, yPosition);
+      yPosition += lineHeight;
+    }
+
     if (ticketData.totalNet !== undefined) {
-      doc.text(`TOTAL NETO: $${ticketData.totalNet.toFixed(2)}`, 5, yPosition);
+      doc.text(`GANANCIA NETA: $${ticketData.totalNet.toFixed(2)}`, 5, yPosition);
       yPosition += lineHeight;
     }
 
@@ -2271,13 +2277,26 @@ export class OrdersComponent implements OnInit {
     // Si period es un string, generar corte de caja
     const ticketData = this.getTicketData(period);
 
+    // Adjuntar los gastos del periodo correspondiente a los datos del ticket
+    let periodExpenses = 0;
+    if (period === 'today') periodExpenses = this.todayExpensesAmount;
+    else if (period === 'yesterday') periodExpenses = this.yesterdayExpensesAmount;
+    else if (period === 'week') periodExpenses = this.weekExpensesAmount;
+    else if (period === 'month') periodExpenses = this.monthExpensesAmount;
+    
+    ticketData.periodExpenses = periodExpenses;
+
     const total = ticketData?.total || 0;
     const paymentMethods = ticketData?.paymentMethods || { cash: 0, credit: 0, debit: 0 };
     const items = ticketData?.items || [];
     const branch = this.ordenes.length > 0 ? this.ordenes[0].sucursal?.nombre : 'N/A';
     const totalDiscounts = Number(ticketData?.totalDiscounts || 0);
     const discountCount = Number(ticketData?.discountCount || 0);
-    const totalNet = Number(ticketData?.totalNet || (total - totalDiscounts));
+
+    // Calculamos el ganancia final
+    const baseNet = Number(ticketData?.totalNet || (total - totalDiscounts));
+    const ultimateNetProfit = +(baseNet - periodExpenses);
+    ticketData.totalNet = ultimateNetProfit;
 
     const doc = new jsPDF({
       orientation: 'portrait',
@@ -2312,11 +2331,14 @@ export class OrdersComponent implements OnInit {
     doc.text(`02-TARJETAS CRÉDITO: $${paymentMethods.credit.toFixed(2)}`, 5, yPosition += lineHeight);
     doc.text(`03-TARJETAS DÉBITO: $${paymentMethods.debit.toFixed(2)}`, 5, yPosition += lineHeight);
 
-    // Descuentos y neto
+    // Descuentos, Gastos y neto
     yPosition += 2;
     doc.setFont('helvetica', 'bold');
     doc.text(`DESCUENTOS 6ª: -$${totalDiscounts.toFixed(2)} (${discountCount})`, 5, yPosition += lineHeight);
-    doc.text(`TOTAL NETO: $${totalNet.toFixed(2)}`, 5, yPosition += lineHeight);
+    doc.text(`GASTOS DEL PERIODO: -$${Number(ticketData.periodExpenses).toFixed(2)}`, 5, yPosition += lineHeight);
+    
+    yPosition += 2;
+    doc.text(`GANANCIA NETA: $${ticketData.totalNet.toFixed(2)}`, 5, yPosition += lineHeight);
 
     // Sección de canceladas
     const cancelledCountTicket = Number(ticketData?.cancelledCount || 0);

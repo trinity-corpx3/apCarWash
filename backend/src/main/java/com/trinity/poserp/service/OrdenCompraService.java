@@ -370,11 +370,23 @@ public class OrdenCompraService {
 
     @Transactional
     public OrdenCompra cancelarOrden(Long id) {
+        // Validar rol: solo Super Admin puede cancelar
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        boolean isSuperAdmin = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equalsIgnoreCase("ROLE_SUPER ADMIN"));
+        if (!isSuperAdmin) {
+            throw new UnauthorizedException("Solo el Super Admin puede cancelar ventas.");
+        }
+
         OrdenCompra orden = ordenCompraRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Orden no encontrada con ID: " + id));
 
         if ("cancelado".equals(orden.getEstado())) {
             throw new IllegalStateException("La orden ya se encuentra cancelada.");
+        }
+
+        if (orden.isFacturada()) {
+            throw new IllegalStateException("No se puede cancelar una venta que ya fue facturada.");
         }
 
         orden.setEstado("cancelado");

@@ -211,6 +211,8 @@ public class OrdenCompraController {
                     "success", true,
                     "id", orden.getId(),
                     "estado", orden.getEstado()));
+        } catch (com.trinity.poserp.exception.UnauthorizedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (RuntimeException e) {

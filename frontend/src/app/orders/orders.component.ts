@@ -9,6 +9,7 @@ import { environment } from '../../environments/environment';
 import { NgbModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FacturacionService } from '../service/facturacion.service';
 import { SidebarComponent } from '../shared/sidebar/sidebar.component';
+import { ExpensesService } from '../service/expenses.service';
 
 import { OrdenCompra } from '../models/orden-compra.model';
 import moment from 'moment';
@@ -482,12 +483,20 @@ export class OrdersComponent implements OnInit {
   editandoTimbres: boolean = false;
   timbresDisponiblesOriginal: number = 300;
 
+  // Gastos
+  gastos: any[] = [];
+  todayExpensesAmount: number = 0;
+  yesterdayExpensesAmount: number = 0;
+  weekExpensesAmount: number = 0;
+  monthExpensesAmount: number = 0;
+
   constructor(
     public authService: AuthService,
     private router: Router,
     private http: HttpClient,
     private modal: NgbModal,
-    private facturacionService: FacturacionService
+    private facturacionService: FacturacionService,
+    private expensesService: ExpensesService
   ) { }
 
   ngOnInit(): void {
@@ -616,27 +625,40 @@ export class OrdersComponent implements OnInit {
     }
 
     const headers = this.buildAuthHeaders();
-    this.http
-      .get<any[]>(`${this.apiUrl}/ordenes-compra/por-sucursal?sucursalId=${this.currentSucursalId}`, { headers })
-      .subscribe({
-        next: (response: any[]) => {
-          console.log('Órdenes recibidas:', response);
-          this.ordenes = this.mapOrdersResponse(response);
-          this.ordenes.sort((a, b) => this.getOrderTimestamp(b.fecha) - this.getOrderTimestamp(a.fecha));
-          this.paginateOrders();
-          this.calculateSalesSummary();
-          this.refreshGlobalInvoiceOrders();
-          this.loading = false;
-        },
-        error: (error) => {
-          console.error('Error al obtener órdenes:', error);
-          this.ordenes = [];
-          this.paginateOrders();
-          this.calculateSalesSummary();
-          this.refreshGlobalInvoiceOrders();
-          this.loading = false;
-        },
-      });
+    
+    // Cargar también los gastos de la sucursal
+    forkJoin({
+      ordenes: this.http.get<any[]>(`${this.apiUrl}/ordenes-compra/por-sucursal?sucursalId=${this.currentSucursalId}`, { headers }),
+      gastos: this.expensesService.getBySucursal(this.currentSucursalId).pipe(catchError(() => of([])))
+    }).subscribe({
+      next: (responses) => {
+        console.log('Órdenes recibidas:', responses.ordenes);
+        this.ordenes = this.mapOrdersResponse(responses.ordenes);
+        this.ordenes.sort((a, b) => this.getOrderTimestamp(b.fecha) - this.getOrderTimestamp(a.fecha));
+        
+        // Guardar gastos y filtrar si es operador
+        let gastosData = responses.gastos || [];
+        if (this.userRole.toLowerCase() === 'operator') {
+          const userId = this.authService.getCurrentUser()?.id;
+          gastosData = gastosData.filter(g => g.usuario?.id === userId);
+        }
+        this.gastos = gastosData;
+
+        this.paginateOrders();
+        this.calculateSalesSummary();
+        this.refreshGlobalInvoiceOrders();
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error al obtener datos:', error);
+        this.ordenes = [];
+        this.gastos = [];
+        this.paginateOrders();
+        this.calculateSalesSummary();
+        this.refreshGlobalInvoiceOrders();
+        this.loading = false;
+      },
+    });
   }
 
   processOrders(orders: any[]): any[] {
@@ -859,6 +881,11 @@ export class OrdersComponent implements OnInit {
       return;
     }
 
+    if (orden.facturada) {
+      Swal.fire('No permitido', 'No se puede cancelar una venta que ya fue facturada.', 'warning');
+      return;
+    }
+
     Swal.fire({
       title: '¿Cancelar esta venta?',
       html: `<p>Recibo: <strong>${orden.numeroRecibo}</strong></p>
@@ -881,7 +908,8 @@ export class OrdersComponent implements OnInit {
           },
           error: (err) => {
             console.error('Error al cancelar orden:', err);
-            Swal.fire('Error', 'No se pudo cancelar la venta. Intenta de nuevo.', 'error');
+            const msg = err.error?.error || 'No se pudo cancelar la venta. Intenta de nuevo.';
+            Swal.fire('Error', msg, 'error');
           }
         });
       }
@@ -1059,15 +1087,43 @@ export class OrdersComponent implements OnInit {
       }
     });
 
-    // Calcular netos
-    this.todayNetAmount = +(this.todaySalesAmount - this.todayDiscountAmount);
-    this.yesterdayNetAmount = +(this.yesterdaySalesAmount - this.yesterdayDiscountAmount);
-    this.weekNetAmount = +(this.weekSalesAmount - this.weekDiscountAmount);
-    this.monthNetAmount = +(this.monthSalesAmount - this.monthDiscountAmount);
+    // Reiniciar contadores de gastos
+    this.todayExpensesAmount = 0;
+    this.yesterdayExpensesAmount = 0;
+    this.weekExpensesAmount = 0;
+    this.monthExpensesAmount = 0;
+
+    // Procesar gastos para restar a la ganancia
+    this.gastos.forEach(gasto => {
+      // Solo contar gastos que no estén anulados
+      if ((gasto.status || '').toLowerCase() === 'anulado') return;
+
+      const gastoDate = moment(gasto.date);
+      const gastoMonto = Number(gasto.amountMxn || 0);
+
+      if (gastoDate.isSame(today, 'day')) {
+        this.todayExpensesAmount += gastoMonto;
+      }
+      if (gastoDate.isSame(yesterday, 'day')) {
+        this.yesterdayExpensesAmount += gastoMonto;
+      }
+      if (gastoDate.isSameOrAfter(startOfWeek)) {
+        this.weekExpensesAmount += gastoMonto;
+      }
+      if (gastoDate.isSameOrAfter(startOfMonth)) {
+        this.monthExpensesAmount += gastoMonto;
+      }
+    });
+
+    // Calcular netos finales descontando los gastos
+    this.todayNetAmount = +(this.todaySalesAmount - this.todayDiscountAmount - this.todayExpensesAmount);
+    this.yesterdayNetAmount = +(this.yesterdaySalesAmount - this.yesterdayDiscountAmount - this.yesterdayExpensesAmount);
+    this.weekNetAmount = +(this.weekSalesAmount - this.weekDiscountAmount - this.weekExpensesAmount);
+    this.monthNetAmount = +(this.monthSalesAmount - this.monthDiscountAmount - this.monthExpensesAmount);
 
     // Log de resumen para depuración
     console.log('Resumen de ventas calculado:', {
-      today: { count: this.todaySalesCount, amount: this.todaySalesAmount },
+      today: { count: this.todaySalesCount, amount: this.todaySalesAmount, expenses: this.todayExpensesAmount, net: this.todayNetAmount },
       yesterday: { count: this.yesterdaySalesCount, amount: this.yesterdaySalesAmount },
       week: { count: this.weekSalesCount, amount: this.weekSalesAmount },
       month: { count: this.monthSalesCount, amount: this.monthSalesAmount },
@@ -1145,8 +1201,20 @@ export class OrdersComponent implements OnInit {
       }
     });
 
+    this.monthExpensesAmount = 0;
+
+    this.gastos.forEach(gasto => {
+      // Filtrar histórico, solo importa si no está anulado y pertenece al mes
+      if ((gasto.status || '').toLowerCase() === 'anulado') return;
+
+      const gastoDate = moment(gasto.date);
+      if (gastoDate.year() === Number(this.selectedHistoricalYear) && (gastoDate.month() + 1) === Number(this.selectedHistoricalMonth)) {
+        this.monthExpensesAmount += Number(gasto.amountMxn || 0);
+      }
+    });
+
     this.diasConVentas = diasUnicos.size;
-    this.monthNetAmount = +(this.monthSalesAmount - this.monthDiscountAmount);
+    this.monthNetAmount = +(this.monthSalesAmount - this.monthDiscountAmount - this.monthExpensesAmount);
     this.totalMesHistorico = this.monthNetAmount;
 
     console.log('Resumen histórico calculado:', {
@@ -1154,6 +1222,7 @@ export class OrdersComponent implements OnInit {
       totalMesHistorico: this.totalMesHistorico,
       monthSalesCount: this.monthSalesCount,
       monthSalesAmount: this.monthSalesAmount,
+      monthExpensesAmount: this.monthExpensesAmount,
       monthNetAmount: this.monthNetAmount
     });
   }
@@ -1579,7 +1648,22 @@ export class OrdersComponent implements OnInit {
     const totalItems = ticketData?.totalItems || 0;
     const totalDiscounts = Number(ticketData?.totalDiscounts || 0);
     const discountCount = Number(ticketData?.discountCount || 0);
+    
+    // Calcular gastos del periodo seleccionado
+    let customExpensesAmount = 0;
+    const startDate = this.parseDateInMexico(this.customStartDate);
+    const endDate = this.parseDateInMexico(this.customEndDate, true);
+
+    this.gastos.forEach(gasto => {
+      if ((gasto.status || '').toLowerCase() === 'anulado') return;
+      const gastoDate = moment(gasto.date);
+      if (gastoDate.isBetween(startDate, endDate, undefined, '[]')) {
+        customExpensesAmount += Number(gasto.amountMxn || 0);
+      }
+    });
+
     const totalNet = Number(ticketData?.totalNet || (total - totalDiscounts));
+    const ultimateNetProfit = +(totalNet - customExpensesAmount);
 
     // ===========================
     // ✅ Crear el documento PDF
@@ -1626,11 +1710,14 @@ export class OrdersComponent implements OnInit {
     doc.text(`02-TARJETAS CRÉDITO: $${paymentMethods.credit.toFixed(2)}`, 5, yPosition += lineHeight);
     doc.text(`03-TARJETAS DÉBITO: $${paymentMethods.debit.toFixed(2)}`, 5, yPosition += lineHeight);
 
-    // Descuentos y total neto
+    // Descuentos, Gastos y total neto
     yPosition += 2;
     doc.setFont('helvetica', 'bold');
     doc.text(`DESCUENTOS 6ª: -$${totalDiscounts.toFixed(2)} (${discountCount})`, 5, yPosition += lineHeight);
-    doc.text(`TOTAL NETO: $${totalNet.toFixed(2)}`, 5, yPosition += lineHeight);
+    doc.text(`GASTOS DEL PERIODO: -$${customExpensesAmount.toFixed(2)}`, 5, yPosition += lineHeight);
+    
+    yPosition += 2;
+    doc.text(`GANANCIA NETA: $${ultimateNetProfit.toFixed(2)}`, 5, yPosition += lineHeight);
 
     // Sección de canceladas
     const cancelledCountPdf = Number(ticketData?.cancelledCount || 0);

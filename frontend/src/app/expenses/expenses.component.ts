@@ -17,7 +17,7 @@ import jsPDF from 'jspdf';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, SidebarComponent],
   templateUrl: './expenses.component.html',
-  styleUrls: ['./expenses.component.css']
+  styleUrls: ['./expenses.component.css'],
 })
 export class ExpensesComponent implements OnInit {
   expenses: any[] = [];
@@ -27,10 +27,18 @@ export class ExpensesComponent implements OnInit {
   sucursalName: string = '';
 
   // resumen por estado
-  todayRegistered = 0; todayPaid = 0; todayAnnulled = 0;
-  yesterdayRegistered = 0; yesterdayPaid = 0; yesterdayAnnulled = 0;
-  weekRegistered = 0; weekPaid = 0; weekAnnulled = 0;
-  monthRegistered = 0; monthPaid = 0; monthAnnulled = 0;
+  todayRegistered = 0;
+  todayPaid = 0;
+  todayAnnulled = 0;
+  yesterdayRegistered = 0;
+  yesterdayPaid = 0;
+  yesterdayAnnulled = 0;
+  weekRegistered = 0;
+  weekPaid = 0;
+  weekAnnulled = 0;
+  monthRegistered = 0;
+  monthPaid = 0;
+  monthAnnulled = 0;
 
   // paginación (cliente)
   recordsPerPage = 100;
@@ -50,12 +58,12 @@ export class ExpensesComponent implements OnInit {
     status: '',
     minAmount: '',
     maxAmount: '',
-    q: ''
+    q: '',
   };
   vendors: string[] = [];
   categories: string[] = [];
   paymentMethods: string[] = [];
-  statuses: string[] = ['registrado','pagado','anulado'];
+  statuses: string[] = ['registrado', 'pagado', 'anulado'];
 
   constructor(
     private expensesService: ExpensesService,
@@ -65,14 +73,24 @@ export class ExpensesComponent implements OnInit {
 
   ngOnInit(): void {
     const userData = this.authService.getCurrentUser();
-    const userRole = typeof userData?.rol === 'string' ? userData?.rol : userData?.rol?.nombre;
-    if (!userData || !userRole || userRole !== 'Super Admin') {
+    const userRole =
+      typeof userData?.rol === 'string' ? userData?.rol : userData?.rol?.nombre;
+    const normalizedRole = userRole?.toLowerCase();
+
+    if (
+      !userData ||
+      !userRole ||
+      (normalizedRole !== 'super admin' && normalizedRole !== 'operator')
+    ) {
       this.router.navigate(['/unauthorized']);
       return;
     }
 
     const sucursalId = this.authService.getSucursalId();
-    if (!sucursalId) { this.router.navigate(['/unauthorized']); return; }
+    if (!sucursalId) {
+      this.router.navigate(['/unauthorized']);
+      return;
+    }
 
     // Obtener nombre de sucursal y luego cargar gastos
     this.authService.getSucursalNombre(sucursalId).subscribe({
@@ -83,21 +101,38 @@ export class ExpensesComponent implements OnInit {
       error: () => {
         this.sucursalName = 'Sucursal';
         this.loadExpenses(sucursalId);
-      }
+      },
     });
+  }
+
+  private isOperator(): boolean {
+    const userData = this.authService.getCurrentUser();
+    const userRole =
+      typeof userData?.rol === 'string' ? userData?.rol : userData?.rol?.nombre;
+    return userRole?.toLowerCase() === 'operator';
   }
 
   loadExpenses(sucursalId: number) {
     this.loading = true;
     this.expensesService.getBySucursal(sucursalId).subscribe({
-      next: data => {
-        this.expenses = data.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      next: (data) => {
+        let sortedData = data.sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+        );
+        if (this.isOperator()) {
+          const userId = this.authService.getCurrentUser()?.id;
+          sortedData = sortedData.filter((e) => e.usuario?.id === userId);
+        }
+        this.expenses = sortedData;
         this.buildFilterOptions();
         this.applyFilter();
         this.calculateSummary();
         this.loading = false;
       },
-      error: err => { this.loading = false; this.error = 'Error al cargar gastos'; }
+      error: (err) => {
+        this.loading = false;
+        this.error = 'Error al cargar gastos';
+      },
     });
   }
 
@@ -111,16 +146,27 @@ export class ExpensesComponent implements OnInit {
     const sucursalId = this.authService.getSucursalId();
     if (!sucursalId || !this.customStartDate || !this.customEndDate) return;
     this.loading = true;
-    this.expensesService.getBySucursalRango(sucursalId, this.customStartDate, this.customEndDate).subscribe({
-      next: data => {
-        this.expenses = data.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        this.buildFilterOptions();
-        this.applyFilter();
-        this.calculateSummary();
-        this.loading = false;
-      },
-      error: () => { this.loading = false; }
-    });
+    this.expensesService
+      .getBySucursalRango(sucursalId, this.customStartDate, this.customEndDate)
+      .subscribe({
+        next: (data) => {
+          let sortedData = data.sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+          );
+          if (this.isOperator()) {
+            const userId = this.authService.getCurrentUser()?.id;
+            sortedData = sortedData.filter((e) => e.usuario?.id === userId);
+          }
+          this.expenses = sortedData;
+          this.buildFilterOptions();
+          this.applyFilter();
+          this.calculateSummary();
+          this.loading = false;
+        },
+        error: () => {
+          this.loading = false;
+        },
+      });
   }
 
   paginate() {
@@ -130,9 +176,22 @@ export class ExpensesComponent implements OnInit {
     this.totalPages = Math.ceil(this.filtered.length / this.recordsPerPage);
   }
 
-  nextPage() { if (this.currentPage < this.totalPages) { this.currentPage++; this.paginate(); } }
-  previousPage() { if (this.currentPage > 1) { this.currentPage--; this.paginate(); } }
-  onRecordsPerPageChange() { this.currentPage = 1; this.paginate(); }
+  nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.paginate();
+    }
+  }
+  previousPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.paginate();
+    }
+  }
+  onRecordsPerPageChange() {
+    this.currentPage = 1;
+    this.paginate();
+  }
 
   calculateSummary() {
     const today = moment().startOf('day');
@@ -145,7 +204,7 @@ export class ExpensesComponent implements OnInit {
     this.weekRegistered = this.weekPaid = this.weekAnnulled = 0;
     this.monthRegistered = this.monthPaid = this.monthAnnulled = 0;
 
-    this.expenses.forEach(e => {
+    this.expenses.forEach((e) => {
       const d = moment(e.date);
       const amt = Number(e.amountMxn || 0);
       const s = (e.status || '').toLowerCase();
@@ -183,14 +242,24 @@ export class ExpensesComponent implements OnInit {
     localStorage.removeItem('jwt');
     this.authService.logout().subscribe({
       next: () => this.router.navigate(['/login']),
-      error: () => this.router.navigate(['/login'])
+      error: () => this.router.navigate(['/login']),
     });
   }
 
   // === Export CSV ===
   exportToCSV(): void {
-    const headers = ['ID','Fecha','Proveedor','Categoría','Concepto','Método de Pago','Importe','Estado','Usuario'];
-    const rows = this.expenses.map(e => [
+    const headers = [
+      'ID',
+      'Fecha',
+      'Proveedor',
+      'Categoría',
+      'Concepto',
+      'Método de Pago',
+      'Importe',
+      'Estado',
+      'Usuario',
+    ];
+    const rows = this.expenses.map((e) => [
       e.id,
       new Date(e.date).toLocaleString(),
       e.vendorName || '',
@@ -199,37 +268,67 @@ export class ExpensesComponent implements OnInit {
       e.paymentMethod || '',
       e.amountMxn ?? 0,
       e.status || '',
-      e.usuario?.nombreCompleto || ''
+      e.usuario?.nombreCompleto || '',
     ]);
-    const csv = [headers.join(','), ...rows.map(r => r.map(v => typeof v === 'string' && v.includes(',') ? `"${v}"` : v).join(','))].join('\n');
+    const csv = [
+      headers.join(','),
+      ...rows.map((r) =>
+        r
+          .map((v) => (typeof v === 'string' && v.includes(',') ? `"${v}"` : v))
+          .join(','),
+      ),
+    ].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `gastos_${new Date().toISOString().slice(0,10)}.csv`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    a.href = url;
+    a.download = `gastos_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }
 
-  private filterByPeriod(period: 'today'|'yesterday'|'week'|'month'): any[] {
+  private filterByPeriod(
+    period: 'today' | 'yesterday' | 'week' | 'month',
+  ): any[] {
     const today = moment().startOf('day');
     const yesterday = moment().subtract(1, 'day').startOf('day');
     const startOfWeek = moment().startOf('isoWeek');
     const startOfMonth = moment().startOf('month');
 
-    return this.expenses.filter(e => {
+    return this.expenses.filter((e) => {
       const d = moment(e.date);
-      if (period === 'today') { return d.isSame(today, 'day'); }
-      if (period === 'yesterday') { return d.isSame(yesterday, 'day'); }
-      if (period === 'week') { return d.isSameOrAfter(startOfWeek); }
-      if (period === 'month') { return d.isSameOrAfter(startOfMonth); }
+      if (period === 'today') {
+        return d.isSame(today, 'day');
+      }
+      if (period === 'yesterday') {
+        return d.isSame(yesterday, 'day');
+      }
+      if (period === 'week') {
+        return d.isSameOrAfter(startOfWeek);
+      }
+      if (period === 'month') {
+        return d.isSameOrAfter(startOfMonth);
+      }
       return true;
     });
   }
 
-  exportPeriodCSV(period: 'today'|'yesterday'|'week'|'month'): void {
+  exportPeriodCSV(period: 'today' | 'yesterday' | 'week' | 'month'): void {
     const data = this.filterByPeriod(period);
-    const headers = ['ID','Fecha','Proveedor','Categoría','Concepto','Método de Pago','Importe','Estado','Usuario'];
-    const rows = data.map(e => [
+    const headers = [
+      'ID',
+      'Fecha',
+      'Proveedor',
+      'Categoría',
+      'Concepto',
+      'Método de Pago',
+      'Importe',
+      'Estado',
+      'Usuario',
+    ];
+    const rows = data.map((e) => [
       e.id,
       new Date(e.date).toLocaleString(),
       e.vendorName || '',
@@ -238,34 +337,54 @@ export class ExpensesComponent implements OnInit {
       e.paymentMethod || '',
       e.amountMxn ?? 0,
       e.status || '',
-      e.usuario?.nombreCompleto || ''
+      e.usuario?.nombreCompleto || '',
     ]);
-    const csv = [headers.join(','), ...rows.map(r => r.map(v => typeof v === 'string' && v.includes(',') ? `"${v}"` : v).join(','))].join('\n');
+    const csv = [
+      headers.join(','),
+      ...rows.map((r) =>
+        r
+          .map((v) => (typeof v === 'string' && v.includes(',') ? `"${v}"` : v))
+          .join(','),
+      ),
+    ].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `gastos_${period}_${new Date().toISOString().slice(0,10)}.csv`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    a.href = url;
+    a.download = `gastos_${period}_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }
 
   // construir opciones para selects de filtros
   buildFilterOptions(): void {
     const uniq = (a: any[]) => Array.from(new Set(a.filter(Boolean)));
-    this.vendors = uniq(this.expenses.map(e => e.vendorName));
-    this.categories = uniq(this.expenses.map(e => e.category));
-    this.paymentMethods = uniq(this.expenses.map(e => e.paymentMethod));
+    this.vendors = uniq(this.expenses.map((e) => e.vendorName));
+    this.categories = uniq(this.expenses.map((e) => e.category));
+    this.paymentMethods = uniq(this.expenses.map((e) => e.paymentMethod));
   }
 
   // aplicar filtros locales
   applyFilter(): void {
-    const min = this.filter.minAmount ? parseFloat(this.filter.minAmount) : undefined;
-    const max = this.filter.maxAmount ? parseFloat(this.filter.maxAmount) : undefined;
+    const min = this.filter.minAmount
+      ? parseFloat(this.filter.minAmount)
+      : undefined;
+    const max = this.filter.maxAmount
+      ? parseFloat(this.filter.maxAmount)
+      : undefined;
     const q = (this.filter.q || '').toLowerCase();
-    this.filtered = this.expenses.filter(e => {
-      if (this.filter.vendor && e.vendorName !== this.filter.vendor) return false;
-      if (this.filter.category && e.category !== this.filter.category) return false;
-      if (this.filter.paymentMethod && e.paymentMethod !== this.filter.paymentMethod) return false;
+    this.filtered = this.expenses.filter((e) => {
+      if (this.filter.vendor && e.vendorName !== this.filter.vendor)
+        return false;
+      if (this.filter.category && e.category !== this.filter.category)
+        return false;
+      if (
+        this.filter.paymentMethod &&
+        e.paymentMethod !== this.filter.paymentMethod
+      )
+        return false;
       if (this.filter.status && e.status !== this.filter.status) return false;
       const amt = Number(e.amountMxn || 0);
       if (min !== undefined && amt < min) return false;
@@ -280,34 +399,59 @@ export class ExpensesComponent implements OnInit {
   // Acciones de estado
   markPaid(e: any): void {
     this.expensesService.markPaid(e.id).subscribe({
-      next: (res) => { e.status = res.status || 'pagado'; this.applyFilter(); this.calculateSummary(); },
-      error: () => {}
+      next: (res) => {
+        e.status = res.status || 'pagado';
+        this.applyFilter();
+        this.calculateSummary();
+      },
+      error: () => {},
     });
   }
 
   annul(e: any): void {
     this.expensesService.annul(e.id).subscribe({
-      next: (res) => { e.status = res.status || 'anulado'; this.applyFilter(); this.calculateSummary(); },
-      error: () => {}
+      next: (res) => {
+        e.status = res.status || 'anulado';
+        this.applyFilter();
+        this.calculateSummary();
+      },
+      error: () => {},
     });
   }
 
   // === Ticket PDF individual ===
   private buildTicketDoc(expense: any): jsPDF {
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [58, 200] });
-    let y = 10; const lh = 5;
-    doc.setFont('helvetica','bold'); doc.setFontSize(10);
-    doc.text('GASTO', 29, y, { align: 'center' }); y += lh;
-    doc.setFont('helvetica','normal'); doc.setFontSize(8);
-    doc.text(`Sucursal: ${expense.sucursal?.nombre || 'N/A'}`, 5, y); y += lh;
-    doc.text(`Usuario: ${expense.usuario?.nombreCompleto || 'N/A'}`, 5, y); y += lh;
-    doc.text(`Fecha: ${new Date(expense.date).toLocaleString()}` , 5, y); y += lh;
-    doc.text(`Proveedor: ${expense.vendorName || '-'}` , 5, y); y += lh;
-    doc.text(`Categoría: ${expense.category || '-'}` , 5, y); y += lh;
-    doc.text(`Concepto: ${expense.concept || '-'}` , 5, y); y += lh;
-    doc.text(`Método: ${expense.paymentMethod || '-'}` , 5, y); y += lh;
-    doc.text(`Importe: $${Number(expense.amountMxn||0).toFixed(2)}` , 5, y); y += lh;
-    doc.text(`Estado: ${expense.status || '-'}` , 5, y); y += lh;
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: [58, 200],
+    });
+    let y = 10;
+    const lh = 5;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text('GASTO', 29, y, { align: 'center' });
+    y += lh;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.text(`Sucursal: ${expense.sucursal?.nombre || 'N/A'}`, 5, y);
+    y += lh;
+    doc.text(`Usuario: ${expense.usuario?.nombreCompleto || 'N/A'}`, 5, y);
+    y += lh;
+    doc.text(`Fecha: ${new Date(expense.date).toLocaleString()}`, 5, y);
+    y += lh;
+    doc.text(`Proveedor: ${expense.vendorName || '-'}`, 5, y);
+    y += lh;
+    doc.text(`Categoría: ${expense.category || '-'}`, 5, y);
+    y += lh;
+    doc.text(`Concepto: ${expense.concept || '-'}`, 5, y);
+    y += lh;
+    doc.text(`Método: ${expense.paymentMethod || '-'}`, 5, y);
+    y += lh;
+    doc.text(`Importe: $${Number(expense.amountMxn || 0).toFixed(2)}`, 5, y);
+    y += lh;
+    doc.text(`Estado: ${expense.status || '-'}`, 5, y);
+    y += lh;
     return doc;
   }
 
@@ -328,16 +472,24 @@ export class ExpensesComponent implements OnInit {
   ticketUrl: string = '';
   openTicketModal(url: string): void {
     this.ticketUrl = url;
-    const iframe = document.getElementById('expenseTicketIframe') as HTMLIFrameElement | null;
-    if (iframe) { iframe.src = url; }
+    const iframe = document.getElementById(
+      'expenseTicketIframe',
+    ) as HTMLIFrameElement | null;
+    if (iframe) {
+      iframe.src = url;
+    }
     const el = document.getElementById('expenseTicketModal');
     if (el) new (bootstrap as any).Modal(el).show();
   }
 
   // Imprimir tickets por período en un solo PDF dentro del modal
-  generatePeriodTickets(period: 'today'|'yesterday'|'week'|'month'): void {
+  generatePeriodTickets(
+    period: 'today' | 'yesterday' | 'week' | 'month',
+  ): void {
     const data = this.filterByPeriod(period);
-    if (!data || data.length === 0) { return; }
+    if (!data || data.length === 0) {
+      return;
+    }
 
     const pageWidth = 58;
     const pageHeight = 200;
@@ -345,15 +497,23 @@ export class ExpensesComponent implements OnInit {
     const startY = 6;
     const lh = 4; // línea compacta
 
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pageWidth, pageHeight] });
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: [pageWidth, pageHeight],
+    });
 
     let y = startY;
     // Encabezado del período
-    doc.setFont('helvetica','bold'); doc.setFontSize(9);
-    doc.text(`GASTOS - ${period.toUpperCase()}`, pageWidth / 2, y, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text(`GASTOS - ${period.toUpperCase()}`, pageWidth / 2, y, {
+      align: 'center',
+    });
     y += lh + 1;
 
-    doc.setFont('helvetica','normal'); doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
 
     const drawExpenseBlock = (exp: any) => {
       const lines = [
@@ -364,26 +524,33 @@ export class ExpensesComponent implements OnInit {
         `Cat: ${exp.category || '-'}`,
         `Conc: ${exp.concept || '-'}`,
         `Método: ${exp.paymentMethod || '-'}`,
-        `Importe: $${Number(exp.amountMxn||0).toFixed(2)}`,
-        `Estado: ${exp.status || '-'}`
+        `Importe: $${Number(exp.amountMxn || 0).toFixed(2)}`,
+        `Estado: ${exp.status || '-'}`,
       ];
       const needed = lines.length * lh + 3; // + separador
       if (y + needed > pageHeight - lh) {
         doc.addPage([pageWidth, pageHeight]);
         y = startY;
-        doc.setFont('helvetica','bold'); doc.setFontSize(9);
-        doc.text(`GASTOS - ${period.toUpperCase()} (cont.)`, pageWidth / 2, y, { align: 'center' });
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.text(`GASTOS - ${period.toUpperCase()} (cont.)`, pageWidth / 2, y, {
+          align: 'center',
+        });
         y += lh + 1;
-        doc.setFont('helvetica','normal'); doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
       }
-      lines.forEach(line => { doc.text(line, marginX, y); y += lh; });
+      lines.forEach((line) => {
+        doc.text(line, marginX, y);
+        y += lh;
+      });
       y += 1; // espacio
       doc.setDrawColor(200);
       doc.line(marginX, y, pageWidth - marginX, y);
       y += 1;
     };
 
-    data.forEach(expense => drawExpenseBlock(expense));
+    data.forEach((expense) => drawExpenseBlock(expense));
 
     // Total del período
     const total = data.reduce((sum, e) => sum + Number(e.amountMxn || 0), 0);
@@ -391,7 +558,8 @@ export class ExpensesComponent implements OnInit {
       doc.addPage([pageWidth, pageHeight]);
       y = startY;
     }
-    doc.setFont('helvetica','bold'); doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
     doc.text(`Total período: $${total.toFixed(2)}`, marginX, y);
 
     const blob = doc.output('blob');
@@ -416,7 +584,7 @@ export class ExpensesComponent implements OnInit {
         this.attachments = [];
         const el = document.getElementById('attachmentsModal');
         if (el) new (bootstrap as any).Modal(el).show();
-      }
+      },
     });
   }
 
@@ -424,35 +592,51 @@ export class ExpensesComponent implements OnInit {
     const file: File | undefined = event?.target?.files?.[0];
     if (!file || !this.selectedExpense) return;
     this.uploading = true;
-    this.expensesService.uploadAttachment(this.selectedExpense.id, file).subscribe({
-      next: (saved) => {
-        this.attachments.push(saved);
-        this.uploading = false;
-        (event.target as HTMLInputElement).value = '';
-      },
-      error: () => { this.uploading = false; }
-    });
+    this.expensesService
+      .uploadAttachment(this.selectedExpense.id, file)
+      .subscribe({
+        next: (saved) => {
+          this.attachments.push(saved);
+          this.uploading = false;
+          (event.target as HTMLInputElement).value = '';
+        },
+        error: () => {
+          this.uploading = false;
+        },
+      });
   }
 
   downloadAttachment(attId: number): void {
     this.expensesService.downloadAttachment(attId).subscribe((blob: any) => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = 'adjunto';
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      a.href = url;
+      a.download = 'adjunto';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
     });
   }
 
   deleteAttachment(attId: number): void {
     this.expensesService.deleteAttachment(attId).subscribe({
-      next: () => { this.attachments = this.attachments.filter((a: any) => a.id !== attId); },
-      error: () => {}
+      next: () => {
+        this.attachments = this.attachments.filter((a: any) => a.id !== attId);
+      },
+      error: () => {},
     });
   }
 
   // ===== Nuevo gasto =====
-  newExpense: any = { vendorName: '', category: '', concept: '', amountMxn: '', paymentMethod: '', notes: '' };
+  newExpense: any = {
+    vendorName: '',
+    category: '',
+    concept: '',
+    amountMxn: '',
+    paymentMethod: '',
+    notes: '',
+  };
 
   openNewExpense(): void {
     const el = document.getElementById('newExpenseModal');
@@ -460,13 +644,15 @@ export class ExpensesComponent implements OnInit {
   }
 
   printTicket(): void {
-    const iframe = document.getElementById('expenseTicketIframe') as HTMLIFrameElement | null;
+    const iframe = document.getElementById(
+      'expenseTicketIframe',
+    ) as HTMLIFrameElement | null;
     if (iframe?.contentWindow) {
       iframe.contentWindow.focus();
       iframe.contentWindow.print();
     }
   }
-  
+
   saveNewExpense(): void {
     const sucursalId = this.authService.getSucursalId();
     const userId = this.authService.getCurrentUser()?.id;
@@ -481,18 +667,23 @@ export class ExpensesComponent implements OnInit {
       amountMxn: parseFloat(this.newExpense.amountMxn),
       paymentMethod: this.newExpense.paymentMethod,
       notes: this.newExpense.notes || null,
-      status: 'registrado'
+      status: 'registrado',
     };
     this.expensesService.createExpense(payload).subscribe({
       next: () => {
         const el = document.getElementById('newExpenseModal');
         if (el) (bootstrap as any).Modal.getInstance(el)?.hide();
-        this.newExpense = { vendorName: '', category: '', concept: '', amountMxn: '', paymentMethod: '', notes: '' };
+        this.newExpense = {
+          vendorName: '',
+          category: '',
+          concept: '',
+          amountMxn: '',
+          paymentMethod: '',
+          notes: '',
+        };
         this.volverMesActual();
       },
-      error: () => {}
+      error: () => {},
     });
   }
 }
-
-

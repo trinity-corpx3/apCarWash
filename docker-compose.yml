@@ -20,7 +20,7 @@ services:
       timeout: 5s
       retries: 5
 
-  backend:
+  apcarwash-backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -40,7 +40,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     depends_on:
-      - backend
+      - apcarwash-backend
     ports:
       - "8081:80"
     networks:
